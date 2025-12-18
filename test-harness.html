@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Widget Test Harness</title>
+</head>
+
+<body>
+    <h1>Customer's Application Page</h1>
+    <p style="color: red; font-size: 30px;">This is the host application CSS (designed to conflict!)</p>
+
+    <div id="afikasafe-widget-mount"></div>
+
+    <script src="./dist/afikasafe-widget.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.afikasafeWidget) {
+                window.afikasafeWidget.init({
+                    // Pass the mountId explicitly, although it defaults to 'afikasafe-widget-mount'
+                    mountId: 'afikasafe-widget-mount',
+
+                    // --- CRITICAL: Provide a valid token ---
+                    userAuthToken: 'VALID_JWT_12345',
+
+                    // Other configuration can go here (e.g., locale, theme)
+                    widgetLocale: 'en-US'
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
