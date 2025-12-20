@@ -1,20 +1,31 @@
-import { DrugService } from '../services/drug.service';
+import DrugService from './drug.service';
 
 export const DrugController = {
-  /**
-   * Business Logic: Get filtered suggestions based on user input
-   */
+
   async getSuggestions(query, selectedItems) {
-    const q = query.toLowerCase().trim();
-    if (q.length < 2) return [];
 
-    // Controller asks Service for the raw data
-    const allDrugs = await DrugService.queryDrugBank();
+    try {
+      if (!query || typeof query !== 'string') return [];
+      const q = query.toLowerCase().trim();
 
-    return allDrugs.filter(item => 
-      item.name.toLowerCase().includes(q) && 
-      !selectedItems.find(s => s.name === item.name)
-    ).slice(0, 5);
+      if (q.length < 2) {
+        return [];
+      }
+
+      const allDrugs = await DrugService.queryDrugBank(query);
+      console.log("🚀 ~ allDrugs:", allDrugs)
+
+      const filtered = allDrugs.filter(item =>
+        item.name.toLowerCase().includes(q) &&
+        !selectedItems.find(s => s.name === item.name)
+      ).slice(0, 5);
+
+      return filtered;
+
+    } catch (error) {
+      console.log("🚀 ~ error:", error)
+      throw error
+    }
   },
 
   /**
@@ -26,5 +37,41 @@ export const DrugController = {
       type: 'manual',
       icon: '💊'
     };
+  },
+
+  async getAnalysis(ItemNames) {
+    console.log("🚀 ~ ItemNames:", ItemNames)
+    if (!ItemNames || !ItemNames.length) return
+
+    try {
+      // 1. Immediate Action: Fetch Depletions (Fast)
+      // We await this so the user sees the primary results quickly
+      const depletions = await DrugService.fetchDepletions(ItemNames)
+
+      // Update UI/Store with depletions immediately
+      // (Replace 'store.commit' with your actual state management call)
+      console.log('✅ Depletions loaded:', depletions)
+
+      // 2. Background Action: Fetch Optimizations (Slow)
+      // We do NOT 'await' this here if we want to return control to the UI, 
+      // OR we call it immediately after and let it update the store later.
+      this._loadOptimizations(ItemNames)
+
+      return depletions
+
+    } catch (error) {
+      console.error('❌ Controller Error:', error)
+      throw error // Re-throw so the UI can show an error toast/alert
+    }
+  },
+
+  async _loadOptimizations(ItemNames) {
+    try {
+      const optimizations = await DrugService.fetchOptimizations(ItemNames)
+      console.log('✅ Optimizations loaded:', optimizations)
+      // Update UI/Store with optimizations here
+    } catch (error) {
+      console.error('❌ Failed to load background optimizations:', error)
+    }
   }
 };

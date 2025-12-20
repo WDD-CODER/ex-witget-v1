@@ -5,9 +5,20 @@
     </div>
 
     <div v-if="isExpanded" class="afikasafe-widget-card">
-      <component :is="contentMode" :config="config" :selected-items="selectedItems" :api-results="apiResults"
-        :loading="loading" @add-item="addItem" @remove-item="removeItem" @set-screen="setScreen"
-        @process-analysis="handleCheckInteractions" />
+   <component 
+  :is="contentMode" 
+  :config="config" 
+  :selected-items="selectedItems" 
+  :depletions="depletions"
+  :optimizations="optimizations"
+  :isLoadingDepletions="isLoadingDepletions"
+  :isLoadingOptimizations="isLoadingOptimizations"
+  :loading="loading" 
+  @add-item="addItem" 
+  @remove-item="removeItem" 
+  @set-screen="setScreen"
+  @process-analysis="handleCheckInteractions" 
+/>
     </div>
   </div>
 </template>
@@ -15,8 +26,9 @@
 <script>
 import SearchScreen from './SearchScreen.vue';
 import ResultsScreen from './ResultsScreen.vue';
-import DrugService from '../services/drug.service';
+import { debounce } from '../directives/debounce';
 import { showErrorMsg, showSuccessMsg } from '../services/event-bus.service';
+import { DrugController } from '../services/drug.controller';
 
 export default {
   name: 'WidgetRoot',
@@ -26,12 +38,19 @@ export default {
   },
   data() {
     return {
+      depletions: [],
+      optimizations: [],
+      isLoadingDepletions: false,
+      isLoadingOptimizations: false,
       isExpanded: false,
       contentMode: 'SearchScreen',
       selectedItems: [],
       apiResults: null,
       loading: false
     };
+  },
+  directives: {
+    debounce // Now available to all children of WidgetRoot
   },
   mounted() {
     if (process.env.NODE_ENV === 'development') this.injectDevStyles();
@@ -43,34 +62,39 @@ export default {
     setScreen(screenName) {
       this.contentMode = screenName;
     },
-    addItem(item) {
-      this.selectedItems.push(item);
-    },
+   addItem(item) {
+    const exists = this.selectedItems.find(i => i.name === item.name);
+    if (!exists) this.selectedItems.push(item);
+},
     removeItem(index) {
       this.selectedItems.splice(index, 1);
     },
     async handleCheckInteractions() {
+      console.log("🚀 ~ Analysis Started ~ items:", this.selectedItems.length);
       if (this.selectedItems.length === 0) return;
-      this.loading = true;
+
+      // Convert objects to simple name array for the API
+      const itemNames = this.selectedItems.map(item => item.name);
+
+      this.isLoadingDepletions = true;
+      this.isLoadingOptimizations = true;
+      this.setScreen('ResultsScreen');
+
       try {
-        const response = await DrugService.fetchMedicalFileData(
-          this.config.userAuthToken,
-          this.selectedItems
-        );
-        if (response.success) {
-          this.apiResults = response.data;
-          this.setScreen('ResultsScreen');
-          showSuccessMsg('Analysis complete');
-        } else {
-          showErrorMsg("No analysis available.");
-        }
+        // Progressive Loading: Depletions first
+        this.depletions = await DrugController.getAnalysis(itemNames);
+        this.isLoadingDepletions = false;
+
+        // Background Loading: Optimizations second
+        this.optimizations = await DrugController._loadOptimizations(itemNames);
+        this.isLoadingOptimizations = false;
+        showSuccessMsg('Analysis Worked!')
       } catch (err) {
-        showErrorMsg("Connection failed.");
-      } finally {
-        this.loading = false;
+        this.isLoadingDepletions = false;
+        this.isLoadingOptimizations = false;
+        showErrorMsg("Analysis failed.");
       }
     },
-
     injectDevStyles() {
       const shadowRoot = this.$el.parentNode;
       const regex = /data-v-/i
@@ -144,7 +168,7 @@ export default {
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
+    /* overflow: hidden; */
   }
 }
 </style>
