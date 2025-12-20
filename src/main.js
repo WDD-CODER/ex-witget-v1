@@ -1,8 +1,14 @@
 import Vue from 'vue';
+
+//Components
 import WidgetRoot from './components/WidgetRoot.vue';
 import UserMsg from './components/UserMsg.vue'; // 1. Import UserMsg
 
+//Directives
+import { debounce } from './directives/debounce';
 const CSS_FILE_NAME = 'afikasafe-widget.css';
+
+Vue.directive('debounce', debounce);
 
 function loadCssText(filename) {
     const scriptTag = document.querySelector('script[src*="afikasafe-widget.js"], script[src*="afikasafe-widget.umd.js"]');

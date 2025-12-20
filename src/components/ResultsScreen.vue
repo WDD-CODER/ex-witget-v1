@@ -6,62 +6,157 @@
     </div>
 
     <div class="card-body">
-      <div v-if="!results || results.length === 0" class="loading-state">
-        No interactions detected for these items.
-      </div>
-
-      <div v-else class="results-container">
-        <div 
-          v-for="(res, idx) in results" 
-          :key="idx"
-          :class="['result-card', res.severity === 'high' ? 'danger' : 'safe']"
-        >
-          <span class="result-title">{{ res.title }}</span>
-          <p>{{ res.description }}</p>
+      <section class="analysis-section">
+        <h4>Depletions</h4>
+        <div v-if="isLoadingDepletions" class="loading-state">Finding depletions...</div>
+        <div v-else-if="!depletions.length" class="empty-state">No depletions detected.</div>
+        <div v-else class="results-container">
+          <div v-for="(res, idx) in depletions" :key="'dep-'+idx" class="result-card safe">
+            <span class="result-title">{{ res.name }}</span>
+            <p>{{ res.description }}</p>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <hr class="section-divider" />
+
+      <section class="analysis-section">
+        <h4>Optimizations</h4>
+        <div v-if="isLoadingOptimizations" class="loading-state">
+          <span class="spinner"></span> Analyzing optimizations...
+        </div>
+        <div v-else-if="!optimizations.length" class="empty-state">No optimizations found.</div>
+        <div v-else class="results-container">
+          <div v-for="(res, idx) in optimizations" :key="'opt-'+idx" class="result-card danger">
+            <span class="result-title">{{ res.name }}</span>
+            <p>{{ res.description }}</p>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['results']
-};
+  props: {
+    depletions: { type: Array, default: () => [] },
+    optimizations: { type: Array, default: () => [] },
+    isLoadingDepletions: { type: Boolean, default: false },
+    isLoadingOptimizations: { type: Boolean, default: false }
+  },
+  mounted() {
+    console.log("ResultsScreen mounted with depletions:", this.depletions);
+  },
+}
+
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #eee;
-  h3 { margin: 0; font-size: 16px; color: #1b3a57; }
-  .back-btn { background: none; border: none; color: #1b3a57; text-decoration: underline; cursor: pointer; }
-}
+.results-screen {
+  position: relative;
 
-.card-body {
-  padding: 15px;
-  max-height: 300px;
-  overflow-y: auto;
-
-  .results-container {
+  .card-header {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    position: sticky;
+    top: 0;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    z-index: 1000;
 
-    .result-card {
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      border-left: 4px solid #ddd;
-      
-      &.danger { background: #fff5f5; border-left-color: #d32f2f; color: #b71c1c; }
-      &.safe { background: #f1f8e9; border-left-color: #388e3c; color: #1b5e20; }
-      .result-title { display: block; font-weight: bold; margin-bottom: 2px; }
+    h3 {
+      margin: 0;
+      color: #1b3a57;
+      font-size: 16px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #1b3a57;
+      text-decoration: underline;
+      cursor: pointer;
     }
   }
-  .loading-state { text-align: center; padding: 20px; color: #666; font-style: italic; }
+
+  .card-body {
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+
+    .analysis-section {
+      margin-bottom: 20px;
+
+      h4 {
+        margin: 0 0 10px 0;
+        color: #555;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .loading-state, .empty-state {
+        padding: 15px;
+        color: #888;
+        font-size: 12px;
+        text-align: center;
+        font-style: italic;
+
+        .spinner {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border: 2px solid #ccc;
+          border-top-color: #1b3a57;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
+      .result-card {
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 4px solid #ddd;
+        font-size: 13px;
+
+        &.danger {
+          background: #fff5f5;
+          border-left-color: #d32f2f;
+          color: #b71c1c;
+        }
+
+        &.safe {
+          background: #f1f8e9;
+          border-left-color: #388e3c;
+          color: #1b5e20;
+        }
+
+        .result-title {
+          display: block;
+          font-weight: bold;
+          margin-bottom: 2px;
+        }
+      }
+    }
+
+    .section-divider {
+      margin: 20px 0;
+      border: 0;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
