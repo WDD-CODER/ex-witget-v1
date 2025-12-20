@@ -1,36 +1,14 @@
-/**
- * Handles raw data communication.
- */
-const DrugService = {
-  /**
-   * Simulates an asynchronous API call to fetch interaction results.
-   */
-  async fetchInteractions(token, items) {
-    console.log('[DrugService] Fetching interactions for:', items);
+import { drugServiceLocal } from './drug.service.local'
+import { drugServiceRemote } from './drug.service.remote'
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+const isLocal = (process.env.VUE_APP_SERVICE_MODE === 'LOCAL')
 
-    if (items.includes('nothing')) {
-      return { success: true, data: [] };
-    }
+const DrugService = isLocal ? drugServiceLocal : drugServiceRemote
 
-    return {
-      success: true,
-      data: [
-        { 
-          title: "High Risk Interaction", 
-          description: "Combining these substances may cause severe respiratory depression.", 
-          severity: "high" 
-        },
-        { 
-          title: "Information", 
-          description: "No known adverse interactions found with Vitamin C.", 
-          severity: "low" 
-        }
-      ]
-    };
-  }
-};
+if (!DrugService) {
+    console.error('❌ [Switcher] Critical Error: Selected service is undefined!')
+}
 
-export default DrugService;
+console.log(`🔌 [Service Switcher] Active Service: ${isLocal ? 'LOCAL' : 'REMOTE'}`)
+
+export default DrugService
