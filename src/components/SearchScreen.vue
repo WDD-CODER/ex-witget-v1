@@ -6,15 +6,22 @@
 
         <div class="card-body">
             <div class="search-container">
+
                 <div class="search-input-wrapper">
-                    <input type="text" v-debounce:400="onSearchInput" v-model="query"
-                        placeholder="Search drugs or supplements..." @keydown.down.prevent="moveHighlight(1)"
-                        @keydown.up.prevent="moveHighlight(-1)" @keydown.enter.prevent="selectHighlighted" />
+                    <input ref="searchInput" type="text" v-debounce:400="onSearchInput" v-model="query"
+                        :class="{ 'input-error': isInvalidInput }" placeholder="Search drugs or supplements..."
+                        @keydown.down.prevent="moveHighlight(1)" @keydown.up.prevent="moveHighlight(-1)"
+                        @keydown.enter.prevent="selectHighlighted" />
+
+                    <div v-if="isInvalidInput" class="error-notice">
+                        <span class="error-icon">⚠️</span>
+                        Invalid characters detected (text only)
+                    </div>
 
                     <button class="add-btn" @click="handleManualAdd">Add</button>
 
-                    <ul v-if="suggestions.length" class="suggestions-list">
-                        <li v-for="(item, index) in suggestions" :key="item.name"
+                    <ul v-if="suggestions.length && !isInvalidInput" class="suggestions-list">
+                        <li v-for="(item, index) in suggestions" :key="item.name" ref="detailsRef"
                             :class="{ 'highlighted': index === highlightedIndex }" @click="handleSuggestSelect(item)">
                             <span class="suggest-icon">{{ item.icon }}</span>
                             <span class="suggest-name">{{ item.name }}</span>
@@ -43,6 +50,7 @@
 
 <script>
 import DrugService from '../services/drug.service';
+import { showErrorMsg } from '../services/event-bus.service';
 
 export default {
     props: ['selectedItems', 'loading'],
@@ -50,54 +58,68 @@ export default {
         return {
             query: '',
             suggestions: [],
-            highlightedIndex: -1
+            highlightedIndex: -1,
+            isInvalidInput: false,
         };
     },
     methods: {
+
         async onSearchInput(val) {
-            if (!val || val.length < 2) {
-                this.suggestions = [];
-                this.highlightedIndex = -1;
-                return;
-            }
+            console.log("🚀 ~ val:", val)
+            const dangerousChars = /[\\^$*+?.()|[\]{}/]/;
+            this.isInvalidInput = dangerousChars.test(val);
 
             try {
-                const results = await DrugService.queryDrugBank(val);
-                console.log("🚀 ~ results:", results)
+                if (this.isInvalidInput || !val) {
+                    this.suggestions = [];
+                    return;
+                }
 
-                // CRITICAL: Must be 'suggestions' to match your v-for in the template
+                const results = await DrugService.queryDrugBank(val, this.selectedItems);
                 this.suggestions = results || [];
-                this.highlightedIndex = -1;
 
-                console.log("Suggestions updated:", this.suggestions.length);
+                this.$emit('search', val);
             } catch (err) {
-                console.error("Autocomplete UI update failed", err);
+                showErrorMsg("Autocomplete failed")
+                console.error(err);
                 this.suggestions = [];
             }
         },
         moveHighlight(dir) {
             if (!this.suggestions.length) return;
-            this.highlightedIndex = (this.highlightedIndex + dir + this.suggestions.length) % this.suggestions.length;
+
+            const nextIndex = this.highlightedIndex + dir;
+            if (nextIndex >= 0 && nextIndex < this.suggestions.length) {
+                this.highlightedIndex = nextIndex;
+            }
         },
         selectHighlighted() {
             if (this.highlightedIndex >= 0 && this.suggestions[this.highlightedIndex]) {
                 this.handleSuggestSelect(this.suggestions[this.highlightedIndex]);
-            } else {
-                this.handleManualAdd();
             }
         },
         handleSuggestSelect(item) {
-            this.$emit('add-item', { ...item });
+            this.$emit('add-item', item);
             this.query = '';
             this.suggestions = [];
             this.highlightedIndex = -1;
+            this.openDetails = true
         },
         handleManualAdd() {
             if (!this.query.trim()) return;
             this.$emit('add-item', { name: this.query.trim(), type: 'manual', icon: '💊' });
             this.query = '';
-        }
-    }
+        },
+        
+    },
+    mounted() {
+        // Ensure the input is ready and then focus
+        this.$nextTick(() => {
+            if (this.$refs.searchInput) {
+                this.$refs.searchInput.focus();
+            }
+        });
+    },
 };
 </script>
 
@@ -109,12 +131,15 @@ export default {
 
     .card-header {
         display: flex;
+
         justify-content: space-between;
         padding: 15px;
+
         border-bottom: 1px solid #eee;
 
         h3 {
             margin: 0;
+
             color: #1b3a57;
             font-size: 16px;
         }
@@ -126,27 +151,62 @@ export default {
 
         .search-input-wrapper {
             display: flex;
+            flex-direction: column;
             position: relative;
-            width: 100%;
+
+            gap: 4px;
 
             input {
-                width: 100%;
+                /* width: 100%; */
                 padding: 10px 60px 10px 12px;
+
                 border: 1px solid #ddd;
                 border-radius: 8px;
                 font-family: inherit;
+
+                &.input-error {
+                    background-color: #fff8f8;
+                    border-color: #d32f2f;
+                }
+            }
+
+            .error-notice {
+                display: flex;
+
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+
+                background: #fdecea;
+                color: #d32f2f;
+                font-size: 11px;
+                font-weight: 600;
+
+                border: 1px solid #ffcdd2;
+                border-radius: 4px;
+
+                .error-icon {
+                    font-size: 12px;
+                }
             }
 
             .add-btn {
+                display: flex;
+                place-items: center;
                 position: absolute;
                 top: 5px;
                 right: 5px;
                 bottom: 5px;
+
+                height: 26px;
                 padding: 0 12px;
+
                 background: #1b3a57;
                 color: #fff;
+
                 border: none;
                 border-radius: 6px;
+
                 cursor: pointer;
                 transition: opacity 0.2s;
 
@@ -159,20 +219,30 @@ export default {
                 position: absolute;
                 top: 100%;
                 left: 0;
+                z-index: 2000;
+
                 width: 100%;
+                max-height: 150px;
+
                 margin: 4px 0;
                 padding: 0;
+
                 background: #fff;
+
+                overflow: auto;
+
                 border: 1px solid #ddd;
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
                 list-style: none;
-                z-index: 2000;
 
                 li {
                     display: flex;
+
                     align-items: center;
                     padding: 10px;
+
                     cursor: pointer;
                     transition: background 0.2s;
 
@@ -190,8 +260,8 @@ export default {
                     }
 
                     .suggest-name {
-                        font-size: 14px;
                         color: #333;
+                        font-size: 14px;
                     }
                 }
             }
@@ -200,14 +270,18 @@ export default {
         .items-list {
             display: flex;
             flex-wrap: wrap;
+
             gap: 8px;
             margin-top: 15px;
 
             .chip {
                 display: flex;
+
                 align-items: center;
                 padding: 4px 10px;
+
                 background: #e8f5e9;
+
                 border-radius: 16px;
                 font-size: 13px;
 
@@ -217,8 +291,10 @@ export default {
 
                 .remove-chip {
                     margin-left: 8px;
-                    cursor: pointer;
+
                     color: #666;
+
+                    cursor: pointer;
 
                     &:hover {
                         color: #d32f2f;
@@ -230,21 +306,26 @@ export default {
 
     .card-footer {
         padding: 15px;
+
         border-top: 1px solid #eee;
 
         .submit-btn {
             width: 100%;
             padding: 12px;
+
             background: #1b3a57;
             color: #fff;
+            font-weight: bold;
+
             border: none;
             border-radius: 6px;
-            font-weight: bold;
+
             cursor: pointer;
             transition: background 0.2s;
 
             &:disabled {
                 background: #ccc;
+
                 cursor: not-allowed;
             }
 

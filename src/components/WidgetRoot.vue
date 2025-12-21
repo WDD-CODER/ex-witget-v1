@@ -5,20 +5,13 @@
     </div>
 
     <div v-if="isExpanded" class="afikasafe-widget-card">
-   <component 
-  :is="contentMode" 
-  :config="config" 
-  :selected-items="selectedItems" 
-  :depletions="depletions"
-  :optimizations="optimizations"
-  :isLoadingDepletions="isLoadingDepletions"
-  :isLoadingOptimizations="isLoadingOptimizations"
-  :loading="loading" 
-  @add-item="addItem" 
-  @remove-item="removeItem" 
-  @set-screen="setScreen"
-  @process-analysis="handleCheckInteractions" 
-/>
+      <SearchScreen v-if="contentMode === 'SearchScreen'" :selected-items="selectedItems"
+        :loading="isLoadingDepletions || isLoadingOptimizations" @add-item="addItem" @remove-item="removeItem"
+        @process-analysis="handleCheckInteractions" />
+
+      <ResultsScreen v-else-if="contentMode === 'ResultsScreen'" :depletions="depletions" :optimizations="optimizations"
+        :isLoadingDepletions="isLoadingDepletions" :isLoadingOptimizations="isLoadingOptimizations"
+        @set-screen="setScreen" />
     </div>
   </div>
 </template>
@@ -26,8 +19,7 @@
 <script>
 import SearchScreen from './SearchScreen.vue';
 import ResultsScreen from './ResultsScreen.vue';
-import { debounce } from '../directives/debounce';
-import { showErrorMsg, showSuccessMsg } from '../services/event-bus.service';
+import { showErrorMsg } from '../services/event-bus.service';
 import { DrugController } from '../services/drug.controller';
 
 export default {
@@ -38,19 +30,14 @@ export default {
   },
   data() {
     return {
-      depletions: [],
-      optimizations: [],
-      isLoadingDepletions: false,
-      isLoadingOptimizations: false,
       isExpanded: false,
       contentMode: 'SearchScreen',
       selectedItems: [],
-      apiResults: null,
-      loading: false
+      depletions: [],
+      optimizations: [],
+      isLoadingDepletions: false,
+      isLoadingOptimizations: false
     };
-  },
-  directives: {
-    debounce // Now available to all children of WidgetRoot
   },
   mounted() {
     if (process.env.NODE_ENV === 'development') this.injectDevStyles();
@@ -62,33 +49,31 @@ export default {
     setScreen(screenName) {
       this.contentMode = screenName;
     },
-   addItem(item) {
-    const exists = this.selectedItems.find(i => i.name === item.name);
-    if (!exists) this.selectedItems.push(item);
-},
+    addItem(item) {
+      const exists = this.selectedItems.find(i => i.name === item.name);
+      if (!exists) this.selectedItems.push(item);
+    },
     removeItem(index) {
       this.selectedItems.splice(index, 1);
     },
     async handleCheckInteractions() {
-      console.log("🚀 ~ Analysis Started ~ items:", this.selectedItems.length);
       if (this.selectedItems.length === 0) return;
 
-      // Convert objects to simple name array for the API
       const itemNames = this.selectedItems.map(item => item.name);
+      this.setScreen('ResultsScreen');
 
       this.isLoadingDepletions = true;
       this.isLoadingOptimizations = true;
-      this.setScreen('ResultsScreen');
 
       try {
-        // Progressive Loading: Depletions first
+        // 1. Get Depletions and update UI immediately
         this.depletions = await DrugController.getAnalysis(itemNames);
         this.isLoadingDepletions = false;
 
-        // Background Loading: Optimizations second
+        // 2. Get Optimizations in the background and update UI when ready
         this.optimizations = await DrugController._loadOptimizations(itemNames);
         this.isLoadingOptimizations = false;
-        showSuccessMsg('Analysis Worked!')
+
       } catch (err) {
         this.isLoadingDepletions = false;
         this.isLoadingOptimizations = false;
@@ -97,21 +82,21 @@ export default {
     },
     injectDevStyles() {
       const shadowRoot = this.$el.parentNode;
-      const regex = /data-v-/i
+      const regex = /data-v-/i;
 
       if (!shadowRoot || !shadowRoot.host) return;
 
-      // 1. Layout & Positioning: Clear previous cloned styles
       shadowRoot.querySelectorAll('style.cloned-dev-style').forEach(s => s.remove());
 
       const styles = document.querySelectorAll('style');
       styles.forEach(style => {
-        // 2. Alignment & Spacing: Identify styles belonging to our widget or scoped components
-        const isWidgetStyle = style.textContent.includes('afikasafe') ||
+        const isWidgetStyle =
+          style.textContent.includes('afikasafe') ||
+          style.textContent.includes('search-screen') ||
+          style.textContent.includes('results-screen') ||
           regex.test(style.textContent);
 
         if (isWidgetStyle) {
-          // 3. Dimensions & Aesthetics: Clone and append to Shadow Root
           const clone = style.cloneNode(true);
           clone.classList.add('cloned-dev-style');
           shadowRoot.appendChild(clone);
@@ -149,8 +134,8 @@ export default {
 
     &.is-card-anchor {
       position: absolute;
-      bottom: -20px;
       right: -27px;
+      bottom: -20px;
       width: 40px;
       height: 40px;
     }
@@ -163,12 +148,11 @@ export default {
   .afikasafe-widget-card {
     display: flex;
     flex-direction: column;
-    margin-top: 10px;
     width: 320px;
+    margin-top: 10px;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    /* overflow: hidden; */
   }
 }
 </style>
