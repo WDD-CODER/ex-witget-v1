@@ -40,7 +40,6 @@ export const DrugController = {
   },
 
   async getAnalysis(ItemNames) {
-    console.log("🚀 ~ ItemNames:", ItemNames)
     if (!ItemNames || !ItemNames.length) return
 
     try {
@@ -57,6 +56,7 @@ export const DrugController = {
       // OR we call it immediately after and let it update the store later.
       this._loadOptimizations(ItemNames)
 
+      console.log("🚀 ~ depletions:", depletions)
       return depletions
 
     } catch (error) {
@@ -65,13 +65,15 @@ export const DrugController = {
     }
   },
 
-  async _loadOptimizations(ItemNames) {
-    try {
-      const optimizations = await DrugService.fetchOptimizations(ItemNames)
-      console.log('✅ Optimizations loaded:', optimizations)
-      // Update UI/Store with optimizations here
-    } catch (error) {
-      console.error('❌ Failed to load background optimizations:', error)
-    }
+async _loadOptimizations(ItemNames) {
+  try {
+    const optimizations = await DrugService.fetchOptimizations(ItemNames);
+    console.log('✅ Optimizations loaded:', optimizations);
+    
+    return optimizations; // Added return statement
+  } catch (error) {
+    console.error('❌ Failed to load background optimizations:', error);
+    return []; // Return empty array on error to prevent UI crashes
   }
+}
 };
