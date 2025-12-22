@@ -71,7 +71,7 @@ export default {
         this.isLoadingDepletions = false;
 
         // 2. Get Optimizations in the background and update UI when ready
-        this.optimizations = await DrugController._loadOptimizations(itemNames);
+        this.optimizations = await DrugController.loadOptimizations(itemNames);
         this.isLoadingOptimizations = false;
 
       } catch (err) {

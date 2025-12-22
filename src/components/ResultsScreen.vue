@@ -19,24 +19,37 @@
         </div>
 
         <div v-else class="pill-container">
-          <div v-for="(res, idx) in section.data" :key="section.id + idx" class="pill-wrapper">
+
+          <div v-for="(res, idx) in visibleData[section.id]" :key="section.id + idx" class="pill-wrapper"
+            ref="pillWrappers">
             <button :class="['analysis-pill', section.pillClass, { active: activeItem === (section.id + idx) }]"
               @click.stop="toggleExpand(section.id + idx)">
               <span class="pill-text">{{ res.nutrient || res.title || res.name }}</span>
               <span class="info-icon">i</span>
             </button>
 
-            <div v-if="activeItem === (section.id + idx) && res.causedBy" class="pill-details" ref="detailsContainer">
-              <div v-for="(drug, dIdx) in res.causedBy" :key="'caused-' + dIdx" class="caused-by-item">
-                <span class="drug-name">{{ drug }}</span>
+            <div v-if="activeItem === (section.id + idx) && res.causedBy" class="pill-details">
+              <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" class="caused-by-item">
+                <span class="drug-name" @click.stop="handleInfoClick(dIdx)">{{ drug }}</span>
               </div>
             </div>
           </div>
+
+          <button v-if="section.data.length > 8 || expandedSections[section.id]" class="show-more-btn"
+            @click="toggleSection(section.id)">
+            <template v-if="expandedSections[section.id]">
+              Show Less
+            </template>
+            <template v-else>
+              +{{ section.data.length - visibleData[section.id].length }} More {{ section.label }}
+            </template>
+          </button>
         </div>
 
         <hr v-if="section.id === 'dep'" class="section-divider" />
       </section>
     </div>
+
 
   </div>
 </template>
@@ -47,33 +60,57 @@ export default {
     depletions: { type: Array, default: () => [] },
     optimizations: { type: Array, default: () => [] },
     isLoadingDepletions: { type: Boolean, default: false },
-    isLoadingOptimizations: { type: Boolean, default: false }
+    isLoadingOptimizations: { type: Boolean, default: false },
+
   },
   data() {
     return {
       activeItem: null,
-      openDetails: false
+      currentDetailIdx: null,
+      expandedSections: {
+        dep: false,
+        opt: false
+
+      }
     }
   },
   methods: {
+    toggleSection(sectionId) {
+      this.expandedSections[sectionId] = !this.expandedSections[sectionId];
+      // Close any open pills when collapsing to prevent orphaned dropdowns
+      if (!this.expandedSections[sectionId]) {
+        this.activeItem = null;
+      }
+    },
     toggleExpand(id) {
       this.activeItem = this.activeItem === id ? null : id;
     },
-    handleInfoClick(item) {
+    handleInfoClick(idx) {
+      this.currentDetailIdx = idx
       // This will be used later to show the description/details
-      console.log("Viewing details for:", item.nutrient);
+      // console.log("Viewing details for:", item.nutrient);
     },
 
     handleGlobalClick(ev) {
       if (!this.activeItem) return;
-      const containers = this.$refs.detailsContainer || [];
-      const clickedInside = containers.some(el => el.contains(ev.target));
+      const wrappers = this.$refs.pillWrappers || [];
+      const clickedInside = wrappers.some(el => el.contains(ev.target));
       if (!clickedInside) {
         this.activeItem = null;
       }
     }
   },
   computed: {
+    visibleData() {
+      const depData = this.depletions || [];
+      const optData = this.optimizations || [];
+
+      return {
+        // Show all if expanded, otherwise cap at 4
+        dep: this.expandedSections.dep ? depData : depData.slice(0, 4),
+        opt: this.expandedSections.opt ? optData : optData.slice(0, 4)
+      }
+    },
     sections() {
       return [
         {
@@ -192,6 +229,29 @@ export default {
         grid-auto-flow: dense;
 
         gap: 8px;
+
+        .show-more-btn {
+          grid-column: 1 / -1;
+
+          margin-top: 8px;
+          padding: 8px;
+
+          background: #f8f9fa;
+          color: #1b3a57;
+          font-size: 11px;
+          font-weight: bold;
+
+          border: 1px dashed #cbd5e0;
+          border-radius: 6px;
+
+          cursor: pointer;
+          transition: all 0.2s;
+
+          &:hover {
+            background: #edf2f7;
+            border-color: #1b3a57;
+          }
+        }
       }
 
       .pill-wrapper {
@@ -300,12 +360,34 @@ export default {
         overflow: hidden;
 
         .caused-by-item {
-          padding: 6px 8px;
+          display: flex;
+
+          /* padding: 6px 8px; */
 
           border-bottom: 1px solid #eee;
           text-align: center;
           font-size: 11px;
           color: #555;
+
+          .drug-name {
+            display: block;
+
+            width: 100%;
+            padding: 10px 12px;
+            /* Increased padding for the 'large' look */
+
+            color: #555;
+            font-size: 11px;
+            text-align: center;
+
+            cursor: pointer;
+            transition: background 0.2s;
+
+            &:hover {
+              background: #f0f0f0;
+              color: #1b3a57;
+            }
+          }
 
           &:last-child {
             border-bottom: none;

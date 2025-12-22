@@ -13,6 +13,10 @@
                         @keydown.down.prevent="moveHighlight(1)" @keydown.up.prevent="moveHighlight(-1)"
                         @keydown.enter.prevent="selectHighlighted" />
 
+                    <div v-if="isAutocompleteLoading" class="search-loader">
+                        <div class="spinner"></div>
+                    </div>
+
                     <div v-if="isInvalidInput" class="error-notice">
                         <span class="error-icon">⚠️</span>
                         Invalid characters detected (text only)
@@ -60,29 +64,32 @@ export default {
             suggestions: [],
             highlightedIndex: -1,
             isInvalidInput: false,
+            isAutocompleteLoading: false,
         };
     },
     methods: {
-
         async onSearchInput(val) {
-            console.log("🚀 ~ val:", val)
-            const dangerousChars = /[\\^$*+?.()|[\]{}/]/;
-            this.isInvalidInput = dangerousChars.test(val);
+            // const dangerousChars = /[\\^$*+?()|[\]{}/]/;
+            // this.isInvalidInput = dangerousChars.test(val);
 
             try {
                 if (this.isInvalidInput || !val) {
                     this.suggestions = [];
                     return;
                 }
+                this.isAutocompleteLoading = true;
 
                 const results = await DrugService.queryDrugBank(val, this.selectedItems);
-                this.suggestions = results || [];
-
+                const res = results || [];
+                this.suggestions = res
                 this.$emit('search', val);
             } catch (err) {
                 showErrorMsg("Autocomplete failed")
                 console.error(err);
                 this.suggestions = [];
+            } finally {
+                // Stop Loading
+                this.isAutocompleteLoading = false;
             }
         },
         moveHighlight(dir) {
@@ -99,18 +106,33 @@ export default {
             }
         },
         handleSuggestSelect(item) {
+            if (!this.query || this.isInvalidInput) return;
             this.$emit('add-item', item);
             this.query = '';
             this.suggestions = [];
             this.highlightedIndex = -1;
             this.openDetails = true
+
+            const exists = this.selectedItems.some(i => i.id === item.id);
+
+            if (!exists) {
+                this.$emit('add-item', item);
+            }
+
+            this.query = '';
+            this.suggestions = [];
+
+        },
+        onRemoveItem(index) {
+            this.$emit('remove-item', index);
         },
         handleManualAdd() {
             if (!this.query.trim()) return;
             this.$emit('add-item', { name: this.query.trim(), type: 'manual', icon: '💊' });
-            this.query = '';
+            this.query = ''
+            this.suggestions = []
         },
-        
+
     },
     mounted() {
         // Ensure the input is ready and then focus
@@ -157,8 +179,7 @@ export default {
             gap: 4px;
 
             input {
-                /* width: 100%; */
-                padding: 10px 60px 10px 12px;
+                padding: 10px 90px 10px 12px;
 
                 border: 1px solid #ddd;
                 border-radius: 8px;
@@ -169,6 +190,25 @@ export default {
                     border-color: #d32f2f;
                 }
             }
+
+            .search-loader {
+                display: flex;
+                position: absolute;
+                top: 10px;
+                right: 65px;
+                z-index: 1000;
+
+                .spinner {
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid #f3f3f3;
+                    border-top: 2px solid #1b3a57;
+                    border-radius: 50%;
+
+                    animation: spin 0.8s linear infinite;
+                }
+            }
+
 
             .error-notice {
                 display: flex;
@@ -333,6 +373,16 @@ export default {
                 background: #142d44;
             }
         }
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }
 </style>
