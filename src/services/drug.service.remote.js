@@ -3,22 +3,20 @@ import { httpService } from './http.service';
 export const drugServiceRemote = {
 
     async queryDrugBank(query, selectedItems = []) {
-        console.log("🚀 ~ selectedItems:", selectedItems)
         if (!query) return [];
 
         const criteriaString = JSON.stringify({ q: query });
 
         try {
             const results = await httpService.get('/get-autocomplete', { data: criteriaString })
-            console.log("🚀 ~ results:", results[263])
 
             if (!results || !results.length) return [];
 
-            const selectedNames = selectedItems.map(item => item.map(item.txt || '').toLowerCase());
+            const selectedNames = selectedItems.map(item => (item.name || item.txt || '').toLowerCase());
 
             const newResults = results
                 .filter(item => {
-                    const itemName = (item.txt).toLowerCase();
+                    const itemName = (item.txt || '').toLowerCase();
                     // It seems that specific items have really long name, which looks like a broken. Info.
                     // Therefore I created this Condition did not show them.
                     // Example From database :
@@ -43,9 +41,9 @@ export const drugServiceRemote = {
     },
 
     async fetchDepletions(items) {
-        const body = { q: items };
+        const query = { q: items };
         try {
-            return await httpService.post('/depletions-data', body) || [];
+            return await httpService.post('/depletions-data', query) || [];
         } catch (err) {
             console.error('❌ Depletions Fetch Failed:', err);
             throw err;
