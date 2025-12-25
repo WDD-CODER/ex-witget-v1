@@ -5,10 +5,8 @@ export const drugServiceRemote = {
     async queryDrugBank(query, selectedItems = []) {
         if (!query) return [];
 
-        const criteriaString = JSON.stringify({ q: query });
-
         try {
-            const results = await httpService.get('/get-autocomplete', { data: criteriaString })
+            const results = await httpService.get('/get-autocomplete', { q: query })
 
             if (!results || !results.length) return [];
 
@@ -25,17 +23,18 @@ export const drugServiceRemote = {
                     if (itemName.length > 30) return
                     return !selectedNames.includes(itemName);
                 })
-                .map(item => ({
-                    id: item._id || item.id,
-                    name: item.txt,
-                    icon: (item.metType === 'drug') ? '💊' : '🍃',
-                    metType: item.metType
-                }));
+                .map(item => {
+                    return {
+                        // id: item._id || item.id,
+                        name: item.txt,
+                        icon: (item.matType === 'drug') ? '💊' : '🍃',
+                        type: item.type
+                    };
+                });
 
             return newResults
 
         } catch (error) {
-            console.log("🚀 ~ error:", error)
             throw Error(' Failed getting autocomplete')
         }
     },
@@ -60,6 +59,10 @@ export const drugServiceRemote = {
             console.error('❌ Optimizations Fetch Failed:', err);
             throw err;
         }
+    },
+
+    async fetchDragByName(drugName) {
+        return await httpService.get('/get-drug-by-name', { name: drugName }) || [];
     },
 
     _verifyOptimizationPayload(data) {
