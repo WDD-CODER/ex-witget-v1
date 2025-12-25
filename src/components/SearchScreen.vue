@@ -13,7 +13,7 @@
                         @keydown.down.prevent="moveHighlight(1)" @keydown.up.prevent="moveHighlight(-1)"
                         @keydown.enter.prevent="selectHighlighted" />
 
-                    <div v-if="isAutocompleteLoading" class="search-loader">
+                    <div v-if="isAutocompleteLoading" class="loader">
                         <div class="spinner"></div>
                     </div>
 
@@ -191,7 +191,7 @@ export default {
                 }
             }
 
-            .search-loader {
+            .loader {
                 display: flex;
                 position: absolute;
                 top: 10px;

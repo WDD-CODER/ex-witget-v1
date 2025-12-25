@@ -11,8 +11,16 @@
 
       <ResultsScreen v-else-if="contentMode === 'ResultsScreen'" :depletions="depletions" :optimizations="optimizations"
         :isLoadingDepletions="isLoadingDepletions" :isLoadingOptimizations="isLoadingOptimizations"
+        @set-screen="setScreen" @setSelectedItemName="setSelectedItemName" />
+
+      <MonographScreen v-else-if="contentMode === 'MonographScreen'" :selectedItemName="selectedItemName"
+        @set-screen="setScreen"  @set-label="setSelectedLabel" />
+    
+      <LabelScreen v-else-if="contentMode === 'LabelScreen'" :SelectedLabelTitle="SelectedLabelTitle" :SelectedLabelData="SelectedLabelData"
         @set-screen="setScreen" />
     </div>
+
+
   </div>
 </template>
 
@@ -21,10 +29,12 @@ import SearchScreen from './SearchScreen.vue';
 import ResultsScreen from './ResultsScreen.vue';
 import { showErrorMsg } from '../services/event-bus.service';
 import { DrugController } from '../services/drug.controller';
+import MonographScreen from './MonographScreen.vue';
+import LabelScreen from './LabelScreen.vue';
 
 export default {
   name: 'WidgetRoot',
-  components: { SearchScreen, ResultsScreen },
+  components: { SearchScreen, ResultsScreen, MonographScreen , LabelScreen},
   props: {
     config: { type: Object, required: true }
   },
@@ -33,6 +43,9 @@ export default {
       isExpanded: false,
       contentMode: 'SearchScreen',
       selectedItems: [],
+      selectedItemName: '',
+      SelectedLabelTitle: '',
+      SelectedLabelData:'',
       depletions: [],
       optimizations: [],
       isLoadingDepletions: false,
@@ -46,7 +59,16 @@ export default {
     if (process.env.NODE_ENV === 'development') this.injectDevStyles();
   },
   methods: {
+    setSelectedLabel(data,title){
+      this.SelectedLabelData = data
+      this.SelectedLabelTitle = title
+    },
+    setSelectedItemName(DrugName) {
+      this.selectedItemName = DrugName
+      console.log("🚀 ~ DrugName:", DrugName)
+    },
     setScreen(screenName) {
+      console.log("🚀 ~ screenName:", screenName)
       this.contentMode = screenName;
     },
     addItem(item) {
@@ -107,35 +129,44 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .afikasafe-wrapper {
   display: flex;
   position: fixed;
   flex-direction: column;
   top: 20px;
   left: 20px;
-  align-items: flex-end;
-  font-family: Arial, sans-serif;
   z-index: 10000;
+
+  align-items: flex-end;
+
+  font-family: Arial, sans-serif;
+
+  
 
   .afikasafe-icon-trigger {
     display: flex;
     position: relative;
-    align-items: center;
+    z-index: 2000;
+
     justify-content: center;
+    align-items: center;
     width: 50px;
     height: 50px;
-    background: #fff;
+
+    background: #ffffff;
+
     border: 2px solid #2e7d32;
     border-radius: 50%;
-    cursor: pointer;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 2000;
+
+    cursor: pointer;
 
     &.is-card-anchor {
       position: absolute;
       right: -27px;
       bottom: -20px;
+
       width: 40px;
       height: 40px;
     }
@@ -148,9 +179,12 @@ export default {
   .afikasafe-widget-card {
     display: flex;
     flex-direction: column;
-    width: 320px;
+
     margin-top: 10px;
-    background: #fff;
+    width: 320px;
+
+    background: #ffffff;
+
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
