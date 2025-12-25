@@ -18,39 +18,39 @@
           {{ section.emptyText }}
         </div>
 
-        <div v-else class="pill-container">
-
-          <div v-for="(res, idx) in visibleData[section.id]" :key="section.id + idx" class="pill-wrapper"
-            ref="pillWrappers">
+        <div class="pill-container">
+          <div v-for="(res, idx) in visibleData[section.id]" :key="section.id + idx" class="pill-wrapper">
             <button :class="['analysis-pill', section.pillClass, { active: activeItem === (section.id + idx) }]"
               @click.stop="toggleExpand(section.id + idx)">
               <span class="pill-text">{{ res.nutrient || res.title || res.name }}</span>
-              <span class="info-icon">i</span>
             </button>
 
-            <div v-if="activeItem === (section.id + idx) && res.causedBy" class="pill-details">
-              <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" class="caused-by-item">
-                <span class="drug-name" @click.stop="handleInfoClick(dIdx)">{{ drug }}</span>
+            <div v-if="activeItem === (section.id + idx) && section.id === 'dep'" class="global-detail-card"
+              ref="globalDetailCard" @click.stop>
+              <div class="detail-content">
+                <p v-if="res.dosage" class="dosage-text" v-html="res.dosage"></p>
+
+                <div class="caused-by-section">
+                  <p class="section-label">Depleted by:</p>
+                  <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" @click="onSelectItem(drug)" class="
+                    drug-link">
+                    {{ drug }} <span class="arrow">→</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <button v-if="section.data.length > 8 || expandedSections[section.id]" class="show-more-btn"
             @click="toggleSection(section.id)">
-            <template v-if="expandedSections[section.id]">
-              Show Less
-            </template>
-            <template v-else>
-              +{{ section.data.length - visibleData[section.id].length }} More {{ section.label }}
-            </template>
+            {{ expandedSections[section.id] ? 'Show Less' : `+${section.data.length - visibleData[section.id].length}
+            More ${section.label}` }}
           </button>
         </div>
 
         <hr v-if="section.id === 'dep'" class="section-divider" />
       </section>
     </div>
-
-
   </div>
 </template>
 
@@ -75,6 +75,19 @@ export default {
     }
   },
   methods: {
+    onSelectItem(drugName) {
+      this.$emit('setSelectedItemName', drugName)
+      this.$emit('set-screen', 'MonographScreen')
+    },
+    
+    isSectionActive(sectionId) {
+      return this.activeItem && this.activeItem.startsWith(sectionId);
+    },
+    getActiveItem(sectionId) {
+      if (!this.isSectionActive(sectionId)) return null;
+      const index = parseInt(this.activeItem.replace(sectionId, ''));
+      return this.visibleData[sectionId][index];
+    },
     toggleSection(sectionId) {
       this.expandedSections[sectionId] = !this.expandedSections[sectionId];
       // Close any open pills when collapsing to prevent orphaned dropdowns
@@ -87,19 +100,19 @@ export default {
     },
     handleInfoClick(idx) {
       this.currentDetailIdx = idx
+      console.log('idx', idx)
+
       // This will be used later to show the description/details
       // console.log("Viewing details for:", item.nutrient);
     },
 
-    handleGlobalClick(ev) {
+    handleGlobalClick() {
       if (!this.activeItem) return;
-      const wrappers = this.$refs.pillWrappers || [];
-      const clickedInside = wrappers.some(el => el.contains(ev.target));
-      if (!clickedInside) {
-        this.activeItem = null;
-      }
+
+      this.activeItem = null;
     }
   },
+
   computed: {
     visibleData() {
       const depData = this.depletions || [];
@@ -144,24 +157,33 @@ export default {
 }
 
 </script>
-
 <style scoped>
 .results-screen {
-  position: relative;
 
   .card-header {
     display: flex;
     position: sticky;
     top: 0;
+    z-index: 1000;
 
     justify-content: space-between;
     align-items: center;
     padding: 15px;
 
     background: white;
+
     border-bottom: 1px solid #eee;
 
-    z-index: 1000;
+    .back-btn {
+      background: none;
+
+      color: #1b3a57;
+      text-decoration: underline;
+
+      border: none;
+
+      cursor: pointer;
+    }
 
     h3 {
       margin: 0;
@@ -169,25 +191,15 @@ export default {
       color: #1b3a57;
       font-size: 16px;
     }
-
-    .back-btn {
-      background: none;
-      border: none;
-      color: #1b3a57;
-      text-decoration: underline;
-
-      cursor: pointer;
-    }
   }
 
   .card-body {
-    overflow-y: auto;
-
     padding: 15px;
 
-    /* max-height: 400px; */
+    overflow-y: auto;
 
     .analysis-section {
+      position: relative;
       margin-bottom: 20px;
 
       h4 {
@@ -199,31 +211,7 @@ export default {
         letter-spacing: 0.5px;
       }
 
-      .loading-state,
-      .empty-state {
-        padding: 15px;
-
-        color: #888;
-        font-size: 12px;
-        text-align: center;
-        font-style: italic;
-
-        .spinner {
-          display: inline-block;
-
-          width: 12px;
-          height: 12px;
-
-          border: 2px solid #ccc;
-          border-top-color: #1b3a57;
-          border-radius: 50%;
-
-          animation: spin 1s linear infinite;
-        }
-      }
-
       .pill-container {
-
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         grid-auto-flow: dense;
@@ -249,6 +237,7 @@ export default {
 
           &:hover {
             background: #edf2f7;
+
             border-color: #1b3a57;
           }
         }
@@ -256,141 +245,155 @@ export default {
 
       .pill-wrapper {
         position: relative;
-
         display: flex;
+
         flex-direction: column;
         align-items: center;
         width: 100%;
-      }
 
-      .analysis-pill {
-        position: relative;
-        /* z-index: 2000; */
-
-        display: flex;
-
-        align-items: center;
-        width: 100%;
-        padding: 6px 12px;
-
-        border: 1px solid transparent;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 500;
-
-        cursor: pointer;
-        box-sizing: border-box;
-
-        &.active {
-          border-bottom-left-radius: 0;
-          border-bottom-right-radius: 0;
-          border-color: #eee;
+        &:nth-child(even) {
+          .global-detail-card {
+            left: calc(-100% - 8px);
+          }
         }
 
-        .pill-text {
-          flex: 1;
-          overflow: hidden;
 
-          text-align: left;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .info-icon {
+        .analysis-pill {
           display: flex;
 
-          justify-content: center;
           align-items: center;
-          flex-shrink: 0;
-          margin-left: 8px;
+          width: 100%;
+          padding: 6px 12px;
 
-          width: 16px;
-          height: 16px;
+          font-size: 13px;
+          font-weight: 500;
 
-          background: currentColor;
-          color: white;
-          border-radius: 50%;
-          font-size: 11px;
-          font-weight: bold;
-        }
+          border: 1px solid transparent;
+          border-radius: 20px;
 
+          cursor: pointer;
+          box-sizing: border-box;
 
-        &.depletion {
-          background: #fdecea;
-          color: #d32f2f;
-          border-color: #ffcdd2;
+          .pill-text {
+            flex: 1;
+
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            overflow: hidden;
+          }
 
           .info-icon {
-            background: #d32f2f;
-            color: #fdecea;
-          }
-        }
+            display: flex;
 
-        &.optimization {
-          background: #e8f5e9;
-          color: #2e7d32;
-          border-color: #c8e6c9;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: 8px;
+            width: 16px;
+            height: 16px;
 
-          .info-icon {
-            background: #2e7d32;
-            color: #e8f5e9;
-          }
-        }
-      }
-
-      .pill-details {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        z-index: 1000;
-
-        display: flex;
-        flex-direction: column;
-
-        width: 100%;
-
-        background: #f9f9f9;
-        border: 1px solid #eee;
-        border-top: none;
-        border-radius: 0 0 8px 8px;
-
-        box-sizing: border-box;
-
-        cursor: pointer;
-        overflow: hidden;
-
-        .caused-by-item {
-          display: flex;
-
-          /* padding: 6px 8px; */
-
-          border-bottom: 1px solid #eee;
-          text-align: center;
-          font-size: 11px;
-          color: #555;
-
-          .drug-name {
-            display: block;
-
-            width: 100%;
-            padding: 10px 12px;
-            /* Increased padding for the 'large' look */
-
-            color: #555;
+            background: currentColor;
+            color: white;
             font-size: 11px;
-            text-align: center;
+            font-weight: bold;
 
-            cursor: pointer;
-            transition: background 0.2s;
+            border-radius: 50%;
+          }
 
-            &:hover {
-              background: #f0f0f0;
-              color: #1b3a57;
+          &.depletion {
+            background: #fdecea;
+            color: #d32f2f;
+
+            border-color: #ffcdd2;
+
+            .info-icon {
+              background: #d32f2f;
+              color: #fdecea;
             }
           }
 
-          &:last-child {
-            border-bottom: none;
+          &.optimization {
+            background: #e8f5e9;
+            color: #2e7d32;
+
+            border-color: #c8e6c9;
+
+            .info-icon {
+              background: #2e7d32;
+              color: #e8f5e9;
+            }
+          }
+        }
+
+        .global-detail-card {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          z-index: 2000;
+
+          width: calc(200% + 8px);
+          padding: 16px;
+
+          background: #ffffff;
+
+          border: 1px solid #ffcdd2;
+          border-radius: 16px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          box-sizing: border-box;
+
+          .detail-content {
+            .dosage-text {
+              margin-bottom: 12px;
+
+              color: #1b3a57;
+              font-size: 13px;
+              font-weight: 600;
+            }
+          }
+
+          .caused-by-section {
+            .section-label {
+              margin-bottom: 8px;
+
+              color: #555;
+              font-size: 12px;
+            }
+
+            .drug-link {
+              display: flex;
+
+              align-items: center;
+              padding: 4px 0;
+
+              color: #1b3a57;
+              font-size: 13px;
+
+              cursor: pointer;
+
+              .arrow {
+                margin-left: 5px;
+
+                color: #cbd5e0;
+              }
+            }
+          }
+
+          .monograph-link {
+            margin-top: 12px;
+
+            color: #1b3a57;
+            font-size: 13px;
+            font-weight: 500;
+
+            cursor: pointer;
+
+            .arrow {
+              margin-left: 5px;
+
+              color: #cbd5e0;
+            }
           }
         }
       }
@@ -402,12 +405,6 @@ export default {
       border: 0;
       border-top: 1px solid #f0f0f0;
     }
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 </style>
