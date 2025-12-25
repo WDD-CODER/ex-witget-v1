@@ -62,7 +62,7 @@ export const drugServiceRemote = {
     },
 
     async fetchDragByName(drugName) {
-        return await httpService.get('/get-drug-by-name', { name: drugName }) || [];
+        return await httpService.get('/get-drug-by-name', { name: drugName }) || null;
     },
 
     _verifyOptimizationPayload(data) {

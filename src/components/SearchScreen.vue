@@ -71,15 +71,16 @@ export default {
         async onSearchInput(val) {
             // const dangerousChars = /[\\^$*+?()|[\]{}/]/;
             // this.isInvalidInput = dangerousChars.test(val);
-
             try {
                 if (this.isInvalidInput || !val) {
                     this.suggestions = [];
                     return;
                 }
+                const cleanedVal = val ? val.trimStart() : ''
+               
                 this.isAutocompleteLoading = true;
 
-                const results = await DrugService.queryDrugBank(val, this.selectedItems);
+                const results = await DrugService.queryDrugBank(cleanedVal, this.selectedItems);
                 const res = results || [];
                 this.suggestions = res
                 this.$emit('search', val);
@@ -192,22 +193,10 @@ export default {
             }
 
             .loader {
-                display: flex;
                 position: absolute;
                 top: 10px;
                 right: 65px;
-                z-index: 1000;
-
-                .spinner {
-                    width: 16px;
-                    height: 16px;
-                    border: 2px solid #f3f3f3;
-                    border-top: 2px solid #1b3a57;
-                    border-radius: 50%;
-
-                    animation: spin 0.8s linear infinite;
-                }
-            }
+            } 
 
 
             .error-notice {
@@ -373,16 +362,6 @@ export default {
                 background: #142d44;
             }
         }
-    }
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
     }
 }
 </style>

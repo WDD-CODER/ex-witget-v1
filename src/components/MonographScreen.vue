@@ -92,6 +92,7 @@ export default {
   async mounted() {
     try {
       const drug = await DrugService.fetchDragByName(this.selectedItemName);
+      if (!drug) return
       this.drugInfo = this.mapMaterialInfo(drug)
     } catch (err) {
       console.error("Fetch failed", err);
@@ -152,17 +153,13 @@ export default {
 
   .loader {
     display: flex;
-    place-self: center;
-
+    position: absolute;
+    top: 50%;
+    left: calc(50% - 13px);
 
     .spinner {
       width: 26px;
       height: 26px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #1b3a57;
-      border-radius: 50%;
-
-      animation: spin 0.8s linear infinite;
     }
   }
 

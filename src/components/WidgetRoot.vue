@@ -14,10 +14,10 @@
         @set-screen="setScreen" @setSelectedItemName="setSelectedItemName" />
 
       <MonographScreen v-else-if="contentMode === 'MonographScreen'" :selectedItemName="selectedItemName"
-        @set-screen="setScreen"  @set-label="setSelectedLabel" />
-    
-      <LabelScreen v-else-if="contentMode === 'LabelScreen'" :SelectedLabelTitle="SelectedLabelTitle" :SelectedLabelData="SelectedLabelData"
-        @set-screen="setScreen" />
+        @set-screen="setScreen" @set-label="setSelectedLabel" />
+
+      <LabelScreen v-else-if="contentMode === 'LabelScreen'" :SelectedLabelTitle="SelectedLabelTitle"
+        :SelectedLabelData="SelectedLabelData" @set-screen="setScreen" />
     </div>
 
 
@@ -31,10 +31,11 @@ import { showErrorMsg } from '../services/event-bus.service';
 import { DrugController } from '../services/drug.controller';
 import MonographScreen from './MonographScreen.vue';
 import LabelScreen from './LabelScreen.vue';
+import "../assets/style/basic.css";
 
 export default {
   name: 'WidgetRoot',
-  components: { SearchScreen, ResultsScreen, MonographScreen , LabelScreen},
+  components: { SearchScreen, ResultsScreen, MonographScreen, LabelScreen },
   props: {
     config: { type: Object, required: true }
   },
@@ -45,7 +46,7 @@ export default {
       selectedItems: [],
       selectedItemName: '',
       SelectedLabelTitle: '',
-      SelectedLabelData:'',
+      SelectedLabelData: '',
       depletions: [],
       optimizations: [],
       isLoadingDepletions: false,
@@ -59,7 +60,7 @@ export default {
     if (process.env.NODE_ENV === 'development') this.injectDevStyles();
   },
   methods: {
-    setSelectedLabel(data,title){
+    setSelectedLabel(data, title) {
       this.SelectedLabelData = data
       this.SelectedLabelTitle = title
     },
@@ -129,7 +130,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .afikasafe-wrapper {
   display: flex;
   position: fixed;
@@ -141,8 +142,6 @@ export default {
   align-items: flex-end;
 
   font-family: Arial, sans-serif;
-
-  
 
   .afikasafe-icon-trigger {
     display: flex;
@@ -187,6 +186,33 @@ export default {
 
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .loader {
+    /* display: flex; */
+    /* top: 10px;
+    right: 65px; */
+    /* z-index: 1000; */
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #1b3a57;
+      border-radius: 50%;
+
+      animation: spin 0.8s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

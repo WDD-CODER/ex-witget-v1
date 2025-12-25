@@ -9,14 +9,7 @@
       <section v-for="section in sections" :key="section.id" class="analysis-section">
         <h4>{{ section.label }}</h4>
 
-        <div v-if="section.loading" class="loading-state">
-          <span v-if="section.id === 'opt'" class="spinner"></span>
-          {{ section.loadingText }}
-        </div>
 
-        <div v-else-if="!section.data.length" class="empty-state">
-          {{ section.emptyText }}
-        </div>
 
         <div class="pill-container">
           <div v-for="(res, idx) in visibleData[section.id]" :key="section.id + idx" class="pill-wrapper">
@@ -41,11 +34,25 @@
             </div>
           </div>
 
+          <div v-if="section.loading" class="loading-state">
+
+            <span v-if="section.id === 'opt'" class="spinner"></span>
+            {{ section.loadingText }}
+            <div class="loader">
+              <span class="spinner"></span>
+            </div>
+          </div>
+
+          <div v-else-if="!section.data.length" class="empty-state">
+            {{ section.emptyText }}
+          </div>
+
           <button v-if="section.data.length > 8 || expandedSections[section.id]" class="show-more-btn"
             @click="toggleSection(section.id)">
             {{ expandedSections[section.id] ? 'Show Less' : `+${section.data.length - visibleData[section.id].length}
             More ${section.label}` }}
           </button>
+
         </div>
 
         <hr v-if="section.id === 'dep'" class="section-divider" />
@@ -79,15 +86,15 @@ export default {
       this.$emit('setSelectedItemName', drugName)
       this.$emit('set-screen', 'MonographScreen')
     },
-    
-    isSectionActive(sectionId) {
-      return this.activeItem && this.activeItem.startsWith(sectionId);
-    },
-    getActiveItem(sectionId) {
-      if (!this.isSectionActive(sectionId)) return null;
-      const index = parseInt(this.activeItem.replace(sectionId, ''));
-      return this.visibleData[sectionId][index];
-    },
+
+    // isSectionActive(sectionId) {
+    //   return this.activeItem && this.activeItem.startsWith(sectionId);
+    // },
+    // getActiveItem(sectionId) {
+    //   if (!this.isSectionActive(sectionId)) return null;
+    //   const index = parseInt(this.activeItem.replace(sectionId, ''));
+    //   return this.visibleData[sectionId][index];
+    // },
     toggleSection(sectionId) {
       this.expandedSections[sectionId] = !this.expandedSections[sectionId];
       // Close any open pills when collapsing to prevent orphaned dropdowns
@@ -209,6 +216,18 @@ export default {
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      .loading-state {
+        display: flex;
+        justify-content: space-evenly;
+        width: calc(200% + 8px);
+
+        .loader {
+          display: flex;
+          width: 16px;
+          height: 16px;
+        }
       }
 
       .pill-container {
