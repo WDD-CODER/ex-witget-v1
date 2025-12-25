@@ -11,13 +11,17 @@
 
       <ResultsScreen v-else-if="contentMode === 'ResultsScreen'" :depletions="depletions" :optimizations="optimizations"
         :isLoadingDepletions="isLoadingDepletions" :isLoadingOptimizations="isLoadingOptimizations"
-        @set-screen="setScreen" @setSelectedItemName="setSelectedItemName" />
+        @set-screen="setScreen" @set-selected-item="onSetSelectedItem" @set-drug-interaction="onSetDrugInteraction" />
 
       <MonographScreen v-else-if="contentMode === 'MonographScreen'" :selectedItemName="selectedItemName"
         @set-screen="setScreen" @set-label="setSelectedLabel" />
 
-      <LabelScreen v-else-if="contentMode === 'LabelScreen'" :SelectedLabelTitle="SelectedLabelTitle"
-        :SelectedLabelData="SelectedLabelData" @set-screen="setScreen" />
+      <LabelScreen v-else-if="contentMode === 'LabelScreen'" :selectedLabelTitle="selectedLabelTitle"
+        :selectedLabelData="selectedLabelData" @set-screen="setScreen" />
+
+
+      <InteractionScreen v-else-if="contentMode === 'InteractionScreen'" :interactedDrugName="interactedDrugName"
+        :mainDrugName="mainDrugName" @set-screen="setScreen" />
     </div>
 
 
@@ -27,15 +31,18 @@
 <script>
 import SearchScreen from './SearchScreen.vue';
 import ResultsScreen from './ResultsScreen.vue';
-import { showErrorMsg } from '../services/event-bus.service';
-import { DrugController } from '../services/drug.controller';
+import InteractionScreen from './InteractionScreen.vue';
 import MonographScreen from './MonographScreen.vue';
 import LabelScreen from './LabelScreen.vue';
+
+import { showErrorMsg } from '../services/event-bus.service';
+import { DrugController } from '../services/drug.controller';
+
 import "../assets/style/basic.css";
 
 export default {
   name: 'WidgetRoot',
-  components: { SearchScreen, ResultsScreen, MonographScreen, LabelScreen },
+  components: { SearchScreen, ResultsScreen, MonographScreen, LabelScreen, InteractionScreen },
   props: {
     config: { type: Object, required: true }
   },
@@ -45,8 +52,10 @@ export default {
       contentMode: 'SearchScreen',
       selectedItems: [],
       selectedItemName: '',
-      SelectedLabelTitle: '',
-      SelectedLabelData: '',
+      selectedLabelTitle: '',
+      selectedLabelData: '',
+      mainDrugName: '',
+      interactedDrugName: '',
       depletions: [],
       optimizations: [],
       isLoadingDepletions: false,
@@ -61,15 +70,18 @@ export default {
   },
   methods: {
     setSelectedLabel(data, title) {
-      this.SelectedLabelData = data
-      this.SelectedLabelTitle = title
+      this.selectedLabelTitle = title
+      this.selectedLabelData = data
     },
-    setSelectedItemName(DrugName) {
-      this.selectedItemName = DrugName
+    onSetDrugInteraction(mainDrug, interactedDrug) {
+      this.mainDrugName = mainDrug
+      this.interactedDrugName = interactedDrug
+    },
+    onSetSelectedItem(DrugName) {
       console.log("🚀 ~ DrugName:", DrugName)
+      this.selectedItemName = DrugName
     },
     setScreen(screenName) {
-      console.log("🚀 ~ screenName:", screenName)
       this.contentMode = screenName;
     },
     addItem(item) {
@@ -180,6 +192,7 @@ export default {
     flex-direction: column;
 
     margin-top: 10px;
+
     width: 320px;
 
     background: #ffffff;
@@ -189,10 +202,7 @@ export default {
   }
 
   .loader {
-    /* display: flex; */
-    /* top: 10px;
-    right: 65px; */
-    /* z-index: 1000; */
+      display: flex;
 
     .spinner {
       width: 16px;
@@ -203,6 +213,57 @@ export default {
 
       animation: spin 0.8s linear infinite;
     }
+  }
+}
+
+.monograph-screen {
+  display: grid;
+  position: relative;
+
+  min-height: 200px;
+
+  background: #f4f6f2;
+
+  .monograph-header {
+    display: flex;
+
+    height: 30px;
+    align-items: center;
+    padding: 10px 5px;
+
+    background: #e9ede4;
+    z-index: 1000;
+
+    .back-btn {
+      display: flex;
+
+      width: fit-content;
+
+      background: none;
+
+      color: #1b3a57;
+      font-size: 20px;
+
+      border: none;
+
+      cursor: pointer;
+    }
+
+    h2 {
+      margin: 0;
+
+      color: #1b3a57;
+      font-size: 22px;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+  }
+
+  .monograph-body {
+    position: relative;
+    display: grid;
+    padding: 15px;
+    background-color: inherit;
   }
 }
 

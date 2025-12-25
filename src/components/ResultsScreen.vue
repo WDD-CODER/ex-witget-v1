@@ -21,16 +21,21 @@
             <div v-if="activeItem === (section.id + idx) && section.id === 'dep'" class="global-detail-card"
               ref="globalDetailCard" @click.stop>
               <div class="detail-content">
-                <p v-if="res.dosage" class="dosage-text" v-html="res.dosage"></p>
-
+                <span v-if="res.shortDosage">Daily Dosage : {{ res.shortDosage }}</span>
                 <div class="caused-by-section">
                   <p class="section-label">Depleted by:</p>
-                  <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" @click="onSelectItem(drug)" class="
+                  <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" @click="onSelectInteractedDrug(res.name, drug)"
+                    class="
                     drug-link">
                     {{ drug }} <span class="arrow">→</span>
                   </div>
                 </div>
               </div>
+              <br>
+              <div @click="onSelectItem(res.name)" class="drug-link">
+                {{ res.name }} Monograph <span class="arrow">→</span>
+              </div>
+
             </div>
           </div>
 
@@ -83,8 +88,12 @@ export default {
   },
   methods: {
     onSelectItem(drugName) {
-      this.$emit('setSelectedItemName', drugName)
+      this.$emit('set-selected-item', drugName)
       this.$emit('set-screen', 'MonographScreen')
+    },
+    onSelectInteractedDrug(MainDrugName, interactedDrugName) {
+      this.$emit('set-drug-interaction', MainDrugName, interactedDrugName)
+      this.$emit('set-screen', 'InteractionScreen')
     },
 
     // isSectionActive(sectionId) {
@@ -166,6 +175,8 @@ export default {
 </script>
 <style scoped>
 .results-screen {
+  /* min-width: 320px;
+  min-height: 320px; */
 
   .card-header {
     display: flex;
@@ -203,7 +214,6 @@ export default {
   .card-body {
     padding: 15px;
 
-    overflow-y: auto;
 
     .analysis-section {
       position: relative;
@@ -379,23 +389,23 @@ export default {
               color: #555;
               font-size: 12px;
             }
+          }
 
-            .drug-link {
-              display: flex;
+          .drug-link {
+            display: flex;
 
-              align-items: center;
-              padding: 4px 0;
+            align-items: center;
+            padding: 4px 0;
 
-              color: #1b3a57;
-              font-size: 13px;
+            color: #1b3a57;
+            font-size: 13px;
 
-              cursor: pointer;
+            cursor: pointer;
 
-              .arrow {
-                margin-left: 5px;
+            .arrow {
+              margin-left: 5px;
 
-                color: #cbd5e0;
-              }
+              color: #cbd5e0;
             }
           }
 
