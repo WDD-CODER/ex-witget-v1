@@ -1,7 +1,7 @@
 <template>
   <div class="monograph-screen">
     <div class="monograph-header">
-      <button class="back-btn" @click="$emit('set-screen', 'SearchScreen')">
+      <button class="back-btn" @click="$emit('set-screen', 'ResultsScreen')">
         <span class="arrow">←</span>
       </button>
       <h2>{{ selectedItemName }}</h2>
@@ -99,57 +99,11 @@ export default {
     }
   }
 }
+
 </script>
 
 <style scoped>
 .monograph-screen {
-  display: grid;
-  position: relative;
-
-  min-height: 270px;
-
-
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-
-  background: #f4f6f2;
-
-  z-index: 1000;
-
-  .monograph-header {
-    display: flex;
-
-    height: 30px;
-    align-items: center;
-    padding: 10px 5px;
-
-    background: #e9ede4;
-
-    .back-btn {
-      display: flex;
-
-      width: fit-content;
-
-      background: none;
-
-      color: #1b3a57;
-      font-size: 20px;
-
-      border: none;
-
-      cursor: pointer;
-    }
-
-    h2 {
-      margin: 0;
-
-      color: #1b3a57;
-      font-size: 22px;
-      font-weight: 400;
-      text-transform: uppercase;
-    }
-  }
 
   .loader {
     display: flex;
@@ -164,9 +118,6 @@ export default {
   }
 
   .monograph-body {
-    display: grid;
-    padding: 15px;
-    background-color: inherit;
 
     .drug-info {
       display: grid;

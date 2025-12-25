@@ -4,10 +4,10 @@
       <button class="back-btn" @click="$emit('set-screen', 'MonographScreen')">
         <span class="arrow">←</span>
       </button>
-      <h2>{{ SelectedLabelTitle }}</h2>
+      <h2>{{ selectedLabelTitle }}</h2>
     </div>
     <div class="monograph-body">
-      <div class="label-info" v-html="SelectedLabelData"></div>
+      <div class="label-info" v-html="selectedLabelData"></div>
     </div>
   </div>
 </template>
@@ -18,11 +18,11 @@ export default {
   name: 'LabelScreen'
   ,
   props: {
-    SelectedLabelData: {
+    selectedLabelData: {
       type: String,
       required: true
     },
-    SelectedLabelTitle: {
+    selectedLabelTitle: {
       type: String,
       required: true
     },
@@ -41,7 +41,6 @@ export default {
   position: relative;
 
   height: 270px;
-  /* min-height: 270px; */
 
 
   flex-direction: column;
@@ -97,8 +96,6 @@ export default {
 
     .label-info{
       display: grid;
-
-      /* padding: ; */
     }
 
   }
