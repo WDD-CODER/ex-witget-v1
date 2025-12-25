@@ -91,8 +91,8 @@ export default {
   },
   async mounted() {
     try {
-      const res = await DrugService.fetchDragByName('Vitamin B1');
-      this.drugInfo = this.mapMaterialInfo(res)
+      const drug = await DrugService.fetchDragByName(this.selectedItemName);
+      this.drugInfo = this.mapMaterialInfo(drug)
     } catch (err) {
       console.error("Fetch failed", err);
     }
@@ -186,6 +186,8 @@ export default {
       .drug-label {
         display: flex;
         align-items: center;
+
+        height: fit-content;
         padding: 6px;
 
         background: #ffffff;
