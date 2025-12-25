@@ -77,7 +77,7 @@ export default {
                     return;
                 }
                 const cleanedVal = val ? val.trimStart() : ''
-               
+
                 this.isAutocompleteLoading = true;
 
                 const results = await DrugService.queryDrugBank(cleanedVal, this.selectedItems);
@@ -196,7 +196,7 @@ export default {
                 position: absolute;
                 top: 10px;
                 right: 65px;
-            } 
+            }
 
 
             .error-notice {
