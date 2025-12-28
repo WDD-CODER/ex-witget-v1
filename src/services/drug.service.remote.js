@@ -24,10 +24,16 @@ export const drugServiceRemote = {
                     return !selectedNames.includes(itemName);
                 })
                 .map(item => {
+                    const isDrug = item.matType === 'drug';
+
+                    // Resolve SVG path dynamically so the bundler can see it
+                    const iconPath = isDrug
+                        ? new URL('../assets/img/pill.svg', import.meta.url).href
+                        : new URL('../assets/img/leaf.svg', import.meta.url).href;
                     return {
                         // id: item._id || item.id,
                         name: item.txt,
-                        icon: (item.matType === 'drug') ? '💊' : '🍃',
+                        icon:iconPath,
                         type: item.type
                     };
                 });
