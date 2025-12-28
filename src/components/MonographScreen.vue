@@ -4,6 +4,9 @@
       <button class="back-btn" @click="$emit('set-screen', 'ResultsScreen')">
         <span class="arrow">←</span>
       </button>
+      <!-- <span class="suggest-icon">
+        <img :src="item.icon" :alt="item.name + ' icon'" />
+      </span> -->
       <h2>{{ selectedItemName }}</h2>
     </div>
     <div class="monograph-body">

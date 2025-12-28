@@ -1,13 +1,15 @@
 <template>
   <div class="afikasafe-wrapper">
-    <div class="afikasafe-icon-trigger" :class="{ 'is-card-anchor': isExpanded }" @click="isExpanded = !isExpanded">
-      <span class="leaf-icon">🍃</span>
+    <div class="icon-wrapper" :class="{ 'is-card-anchor': isExpanded }">
+      <div class="afikasafe-icon" @click="isExpanded = !isExpanded">
+        <span class="leaf-icon"><img src="../assets/img/logo.png" alt="logo Image"></span>
+      </div>
     </div>
 
     <div v-if="isExpanded" class="afikasafe-widget-card">
       <SearchScreen v-if="contentMode === 'SearchScreen'" :selected-items="selectedItems"
         :loading="isLoadingDepletions || isLoadingOptimizations" @add-item="addItem" @remove-item="removeItem"
-        @process-analysis="handleCheckInteractions" />
+        @process-analysis="handleCheckInteractions"   @set-screen="setScreen"  @set-selected-item="onSetSelectedItem"/>
 
       <ResultsScreen v-else-if="contentMode === 'ResultsScreen'" :depletions="depletions" :optimizations="optimizations"
         :isLoadingDepletions="isLoadingDepletions" :isLoadingOptimizations="isLoadingOptimizations"
@@ -152,40 +154,60 @@ export default {
   z-index: 10000;
 
   align-items: flex-end;
+  font-family: Roboto;
 
-  font-family: Arial, sans-serif;
 
-  .afikasafe-icon-trigger {
+  .icon-wrapper {
     display: flex;
     position: relative;
-    z-index: 2000;
+    z-index: 2100;
 
-    justify-content: center;
-    align-items: center;
-    width: 50px;
-    height: 50px;
-
-    background: #ffffff;
-
-    border: 2px solid #2e7d32;
+    border: 3px solid transparent;
     border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    background-image: linear-gradient(#235775, #54C394),
+      linear-gradient(90deg, #235775 0%, #54C394 98.4%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
 
-    cursor: pointer;
+    box-shadow: 0 3px 3px 0 rgba(32, 80, 114, 0.4),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.25);
 
     &.is-card-anchor {
       position: absolute;
       right: -27px;
       bottom: -20px;
 
-      width: 40px;
-      height: 40px;
+      .afikasafe-icon {
+        width: 40px;
+        height: 40px;
+
+        img {
+          width: 26.47px;
+          height: 27.94px;
+        }
+      }
     }
 
-    .leaf-icon {
-      font-size: 24px;
+    .afikasafe-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60px;
+      height: 62px;
+
+      background-color: #F4F5F0;
+      border: 1px solid #48C991;
+      border-radius: 50%;
+      box-shadow: 0px 2px 2px 0px #205072;
+      cursor: pointer;
+
+      img {
+        width: 36px;
+        height: 38px;
+      }
     }
   }
+
 
   .afikasafe-widget-card {
     display: flex;
@@ -193,16 +215,26 @@ export default {
 
     margin-top: 10px;
 
-    width: 320px;
+    width: 340px;
+    height: 326px;
 
-    background: #ffffff;
 
-    border-radius: 12px;
+    border: 3px solid transparent;
+    background-image: linear-gradient(#fff, #fff),
+      linear-gradient(90deg, #235775 0%, #54C394 98.4%);
+
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+
+    border-radius: 24px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+     background-color: #F4F5F0;
+
   }
 
   .loader {
-      display: flex;
+    display: flex;
 
     .spinner {
       width: 16px;

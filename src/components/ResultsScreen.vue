@@ -165,6 +165,7 @@ export default {
   },
   mounted() {
     window.addEventListener('click', this.handleGlobalClick)
+    console.log("🚀 ~ 'click':", 'click')
   },
   beforeUnmount() {
     window.removeEventListener('click', this.handleGlobalClick)
@@ -177,6 +178,13 @@ export default {
 .results-screen {
   /* min-width: 320px;
   min-height: 320px; */
+  display: grid;
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
 
   .card-header {
     display: flex;
@@ -187,10 +195,6 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-
-    background: white;
-
-    border-bottom: 1px solid #eee;
 
     .back-btn {
       background: none;

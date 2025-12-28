@@ -8,13 +8,13 @@
         <div class="main-drug">{{ mainDrugName }}</div>
         <div class="interacted">{{ interactedDrugName }}</div>
       </section>
-      <div class="articles" v-if="articleNum">A
+      <div class="articles" v-if="articleNum  || articleNum === 0">A
         <span class="num-of-articles">{{ articleNum }}
         </span>
       </div>
     </div>
     <div class="monograph-body">
-      <div v-if="!!interactionData" class="drug-info">
+      <div v-if="!!interactionData " class="drug-info">
         interactions
       </div>
       <div v-else class="loader">
@@ -43,7 +43,7 @@ export default {
   data() {
     return {
       interactionData: null,
-      articleNum: 1,
+      articleNum: 0,
     }
   },
 }
