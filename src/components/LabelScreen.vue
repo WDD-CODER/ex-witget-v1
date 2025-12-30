@@ -39,42 +39,24 @@ export default {
 .monograph-screen {
   display: grid;
   position: relative;
-
-  height: 270px;
-
-
+  z-index: 1000;
   flex-direction: column;
+
   width: 100%;
+  height: 270px;
 
   background: #f4f6f2;
 
-  z-index: 1000;
-
   .monograph-header {
-    position: sticky;
     display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 
-    height: 30px;
     align-items: center;
-    padding: 10px 5px;
+    height: 30px;
 
     background: #e9ede4;
-
-    .back-btn {
-      display: flex;
-
-      width: fit-content;
-
-      /* margin-right: 15px; */
-      background: none;
-
-      color: #1b3a57;
-      font-size: 20px;
-
-      border: none;
-
-      cursor: pointer;
-    }
 
     h2 {
       margin: 0;
@@ -84,22 +66,31 @@ export default {
       font-weight: 400;
       text-transform: uppercase;
     }
-  }
 
+    .back-btn {
+      display: flex;
+      width: fit-content;
+
+      color: #1b3a57;
+      font-size: 20px;
+
+      background: none;
+      border: none;
+
+      cursor: pointer;
+    }
+  }
 
   .monograph-body {
     display: grid;
-    padding: 15px;
+    padding: 5px 15px;
+
     background-color: inherit;
-  overflow-y: auto;
+    overflow-y: auto;
 
-
-    .label-info{
+    .label-info {
       display: grid;
     }
-
   }
-
-
 }
 </style>
