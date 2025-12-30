@@ -22,14 +22,9 @@
                         Invalid characters detected (text only)
                     </div>
 
-                    <!-- <button class="add-btn" @click="handleManualAdd">Add</button> -->
-
                     <ul v-if="suggestions.length && !isInvalidInput" class="suggestions-list">
                         <li v-for="(item, index) in suggestions" :key="item.name" ref="detailsRef"
                             :class="{ 'highlighted': index === highlightedIndex }" @click="handleSuggestSelect(item)">
-                            <!-- <span class="suggest-icon">
-                                <img :src="item.icon" :alt="item.name + ' icon'" />
-                            </span> -->
                             <span class="suggest-name">{{ item.name }}</span>
                         </li>
                     </ul>
@@ -42,7 +37,7 @@
                     <span class="chip-icon">
                         <img :src="item.icon" :alt="item.name + ' icon'" />
                     </span>
-                    <span class="chip-text"  @click="onSelectItem(item.name)" style="cursor: pointer;">{{ item.name }}</span>
+                    <span class="chip-text"  @click="onSelectItem(item,'fromSearch')" style="cursor: pointer;">{{ item.name }}</span>
                     <span class="remove-chip" @click="$emit('remove-item', index)"><button
                             class="close-btn"></button></span>
                 </div>
@@ -74,14 +69,12 @@ export default {
         };
     },
     methods: {
-        onSelectItem(drugName) {
-            this.$emit('set-selected-item', drugName)
+        onSelectItem(drug,fromWere) {
+            this.$emit('set-selected-item', drug, fromWere )
             this.$emit('set-screen', 'MonographScreen')
         },
 
         async onSearchInput(val) {
-            // const dangerousChars = /[\\^$*+?()|[\]{}/]/;
-            // this.isInvalidInput = dangerousChars.test(val);
             try {
                 if (this.isInvalidInput || !val) {
                     this.suggestions = [];
@@ -164,57 +157,46 @@ export default {
     box-sizing: border-box;
 }
 
-
 .search-screen {
     display: flex;
-    flex-direction: column;
     position: relative;
+    flex-direction: column;
 
     height: 326px;
 
     background-color: #F4F5F0;
     border-radius: inherit;
 
-
     .card-header {
         display: flex;
         position: relative;
 
-        place-content: center;
+        justify-content: center;
         align-items: baseline;
-
         padding: 15px;
 
         h3 {
             margin: 0 auto;
+
             color: #205072;
             font-size: 22px;
             font-weight: lighter;
             line-height: 100%;
         }
-
-
     }
 
     .close-btn {
-        /* position: absolute; */
-        position: relative;
         display: flex;
+        position: relative;
 
-        border: none;
-        /* top: 20px;
-        right: 10px; */
-        /* Layout & Positioning */
-
-        /* Spacing & Dimensions */
         width: 11.67px;
         height: 11.67px;
 
-        /* Content Aesthetics */
-        cursor: pointer;
         background-color: inherit;
+        border: none;
 
-        /* Structural Aesthetics */
+        cursor: pointer;
+
         &::before,
         &::after {
             content: '';
@@ -222,6 +204,7 @@ export default {
             position: absolute;
             top: 50%;
             left: 50%;
+            z-index: 10;
 
             width: 1.25px;
             height: 100%;
@@ -229,7 +212,6 @@ export default {
             background: #000000;
         }
 
-        /* Interactions & Effects */
         &::before {
             transform: translate(-50%, -50%) rotate(45deg);
         }
@@ -237,15 +219,14 @@ export default {
         &::after {
             transform: translate(-50%, -50%) rotate(-45deg);
         }
-
     }
 
     .card-body {
         display: flex;
-        flex-direction: column;
         position: relative;
+        flex-direction: column;
+
         padding: 0 26px 16px 26px;
-        ;
         min-height: 200px;
 
         .logo-back {
@@ -267,24 +248,20 @@ export default {
 
         .search-input-wrapper {
             display: flex;
-            flex-direction: column;
             position: relative;
+            flex-direction: column;
 
             gap: 4px;
 
-
-
             input {
-
-                font-size: 14px;
+                padding: 12px 4px 12px 20px;
 
                 color: #ADADAD;
-
-                padding: 12px 4px 12px 20px;
+                font-size: 14px;
+                font-family: inherit;
 
                 border: 1px solid #225474;
                 border-radius: 24px;
-                font-family: inherit;
 
                 &.input-error {
                     background-color: #fff8f8;
@@ -296,8 +273,8 @@ export default {
                 position: absolute;
                 top: 10px;
                 right: 65px;
+                z-index: 10;
             }
-
 
             .error-notice {
                 display: flex;
@@ -321,12 +298,14 @@ export default {
 
             .add-btn {
                 display: flex;
-                place-items: center;
                 position: absolute;
                 top: 5px;
                 right: 5px;
                 bottom: 5px;
+                z-index: 10;
 
+                justify-content: center;
+                align-items: center;
                 height: 26px;
                 padding: 0 12px;
 
@@ -353,52 +332,40 @@ export default {
 
                 width: 100%;
                 max-height: 148px;
-
-                gap: 4px;
                 margin: 4px 0;
                 padding: 16px;
+                gap: 4px;
 
                 background: #fff;
                 overflow: auto;
+                list-style: none;
 
                 border: 1px solid #ddd;
                 border-radius: 16px;
-
                 box-shadow: 0px 2px 6px 0px #6D6D6D4D;
-
-                list-style: none;
 
                 &::-webkit-scrollbar {
                     width: 6px;
-                    /* Narrower for a cleaner look */
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: transparent;
-                    /* Blends with your container */
                     margin: 10px 0;
-                    /* Keeps the bar away from the rounded corners */
+                    background: transparent;
                 }
 
                 &::-webkit-scrollbar-thumb {
                     background: #cbd5e0;
-                    /* Neutral grey color */
                     border-radius: 10px;
-                    /* Fully rounded handle */
 
                     &:hover {
                         background: #a0aec0;
-                        /* Darker on hover */
                     }
                 }
-
-
 
                 li {
                     display: flex;
 
                     align-items: center;
-                    /* padding: 10px; */
 
                     cursor: pointer;
                     transition: background 0.2s;
@@ -412,10 +379,6 @@ export default {
                         background: #f5f5f5;
                     }
 
-                    /* .suggest-icon {
-                        margin-right: 8px;
-                    } */
-
                     .suggest-name {
                         color: #333;
                         font-size: 16px;
@@ -426,33 +389,32 @@ export default {
 
         .items-list {
             display: grid;
+            z-index: 1;
             grid-template-columns: repeat(2, minmax(100px, 1fr));
             grid-auto-flow: dense;
-            row-gap: 5px;
+
             margin: 10px 0 18px 0;
-            z-index: 1;
+            row-gap: 5px;
 
             .chip {
                 display: grid;
                 grid-template-columns: 15px 1fr 15px;
-                height: 30px;
-                width: 100%;
 
-                place-items: center;
-                gap: 6px;
+                width: 100%;
+                height: 30px;
                 padding: 0 4px;
+                gap: 6px;
+
+                justify-items: center;
+                align-items: center;
 
                 background: #FFFFFF;
 
-                font-size: 13px;
-
-                border-radius: 16px;
                 border: 1px solid #E0E0E0;
+                border-radius: 16px;
 
                 .chip-icon {
                     display: flex;
-                    /* width: 18px;
-                    height: 18px; */
 
                     img {
                         width: 100%;
@@ -462,18 +424,16 @@ export default {
                 }
 
                 .chip-text {
+                    width: 100%;
 
                     color: #484848;
                     font-size: 14px;
                     line-height: 100%;
-
-                    /* Essential for Ellipsis */
-                    width: 100%;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-
-                    white-space: nowrap;
                     text-align: center;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    overflow: hidden;
                 }
 
                 .remove-chip {
@@ -481,7 +441,6 @@ export default {
 
                     justify-content: center;
                     align-items: center;
-
                     width: 24px;
                     height: 24px;
                 }
@@ -491,13 +450,12 @@ export default {
 
                     width: 8px;
                     height: 8px;
-
                     padding: 0;
-
-                    cursor: pointer;
 
                     background: transparent;
                     border: none;
+
+                    cursor: pointer;
 
                     &::before,
                     &::after {
@@ -505,8 +463,10 @@ export default {
                         position: absolute;
                         top: 50%;
                         left: 50%;
+
                         width: 1.5px;
                         height: 100%;
+
                         background-color: #C1C1C1;
                     }
 
@@ -524,20 +484,22 @@ export default {
 
     .submit-btn {
         display: flex;
-        place-content: center;
+
+        justify-content: center;
 
         .check-interactions-btn {
             display: flex;
 
-            place-content: center;
+            justify-content: center;
             width: 166px;
             height: 32px;
-
             padding: 8px 24px;
 
             background: #D1D1D1;
             color: #fff;
-            font-weight: bold;
+            font-size: 14px;
+            font-family: Roboto;
+            font-weight: 500;
 
             border: none;
             border-radius: 29px;
@@ -545,14 +507,8 @@ export default {
             cursor: pointer;
             transition: background 0.2s;
 
-
-            font-size: 14px;
-            font-family: Roboto;
-            font-weight: 500;
-
             &:disabled {
                 background: #ccc;
-
                 cursor: not-allowed;
             }
 

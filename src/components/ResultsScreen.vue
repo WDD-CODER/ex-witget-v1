@@ -24,7 +24,7 @@
                 <span v-if="res.shortDosage">Daily Dosage : {{ res.shortDosage }}</span>
                 <div class="caused-by-section">
                   <p class="section-label">Depleted by:</p>
-                  <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" @click="onSelectInteractedDrug(res.name, drug)"
+                  <div v-for="(drug, dIdx) in res.causedBy" :key="dIdx" @click="onSelectInteractedDrug(res, drug)"
                     class="
                     drug-link">
                     {{ drug }} <span class="arrow">→</span>
@@ -32,7 +32,7 @@
                 </div>
               </div>
               <br>
-              <div @click="onSelectItem(res.name)" class="drug-link">
+              <div @click="onSelectItem(res, 'fromResult')" class="drug-link">
                 {{ res.name }} Monograph <span class="arrow">→</span>
               </div>
 
@@ -67,13 +67,15 @@
 </template>
 
 <script>
+import DrugService from '../services/drug.service';
+import { httpService } from '../services/http.service';
+
 export default {
   props: {
     depletions: { type: Array, default: () => [] },
     optimizations: { type: Array, default: () => [] },
     isLoadingDepletions: { type: Boolean, default: false },
     isLoadingOptimizations: { type: Boolean, default: false },
-
   },
   data() {
     return {
@@ -82,28 +84,52 @@ export default {
       expandedSections: {
         dep: false,
         opt: false
-
       }
     }
   },
   methods: {
-    onSelectItem(drugName) {
-      this.$emit('set-selected-item', drugName)
+    async onSelectItem(drug, fromWere) {
+      this.$emit('set-selected-item', drug, fromWere)
       this.$emit('set-screen', 'MonographScreen')
     },
-    onSelectInteractedDrug(MainDrugName, interactedDrugName) {
-      this.$emit('set-drug-interaction', MainDrugName, interactedDrugName)
-      this.$emit('set-screen', 'InteractionScreen')
-    },
+    async onSelectInteractedDrug(MainDrug, interactedDrugName) {
+      try {
+        // 1. Fetch full drug data to access its labels
+        const interactedDrug = await DrugService.fetchDragByName(interactedDrugName);
+        if (!interactedDrug) return console.error('Drug not found');
 
-    // isSectionActive(sectionId) {
-    //   return this.activeItem && this.activeItem.startsWith(sectionId);
-    // },
-    // getActiveItem(sectionId) {
-    //   if (!this.isSectionActive(sectionId)) return null;
-    //   const index = parseInt(this.activeItem.replace(sectionId, ''));
-    //   return this.visibleData[sectionId][index];
-    // },
+        // 2. Implementation of Label-Based Logic
+        // We check if this drug (e.g., Citalopram) has the specific SSRI Label ID 
+        // that matches the "Vitamin D & SSRIs" interaction.
+        const SSRI_LABEL_ID = '61c1163dbca1ec37f2e4a11c';
+        const hasSsriLabel = interactedDrug.labels?.some(l => (l._id || l) === SSRI_LABEL_ID);
+
+        // 3. Construct sideIds based on priority
+        // If it has the label, we use the Label ID to match the existing interaction record
+        let sideIds;
+        if (hasSsriLabel) {
+          sideIds = [MainDrug._id, SSRI_LABEL_ID];
+        } else {
+          sideIds = [MainDrug._id, interactedDrug._id];
+        }
+
+        const dataObj = {
+          sideIds,
+          side2DraftName: null
+        };
+
+        const encodedData = encodeURIComponent(JSON.stringify(dataObj));
+
+        // 4. Execution
+        const interactionInfo = await httpService.get(`/get-drug-by-drug-interaction?data=${encodedData}`) || null;
+
+        this.$emit('set-drug-interaction', MainDrug.name, interactedDrugName, interactionInfo)
+        this.$emit('set-screen', 'InteractionScreen')
+
+      } catch (err) {
+        console.error('Error in onSelectInteractedDrug:', err);
+      }
+    },
     toggleSection(sectionId) {
       this.expandedSections[sectionId] = !this.expandedSections[sectionId];
       // Close any open pills when collapsing to prevent orphaned dropdowns
@@ -114,14 +140,6 @@ export default {
     toggleExpand(id) {
       this.activeItem = this.activeItem === id ? null : id;
     },
-    handleInfoClick(idx) {
-      this.currentDetailIdx = idx
-      console.log('idx', idx)
-
-      // This will be used later to show the description/details
-      // console.log("Viewing details for:", item.nutrient);
-    },
-
     handleGlobalClick() {
       if (!this.activeItem) return;
 
@@ -165,7 +183,6 @@ export default {
   },
   mounted() {
     window.addEventListener('click', this.handleGlobalClick)
-    console.log("🚀 ~ 'click':", 'click')
   },
   beforeUnmount() {
     window.removeEventListener('click', this.handleGlobalClick)
@@ -176,10 +193,9 @@ export default {
 </script>
 <style scoped>
 .results-screen {
-  /* min-width: 320px;
-  min-height: 320px; */
   display: grid;
   position: relative;
+  z-index: 1000;
 
   width: 100%;
   height: 100%;
@@ -196,31 +212,31 @@ export default {
     align-items: center;
     padding: 15px;
 
-    .back-btn {
-      background: none;
-
-      color: #1b3a57;
-      text-decoration: underline;
-
-      border: none;
-
-      cursor: pointer;
-    }
-
     h3 {
       margin: 0;
 
       color: #1b3a57;
       font-size: 16px;
     }
+
+    .back-btn {
+      color: #1b3a57;
+      font-size: 13px;
+      text-decoration: underline;
+
+      background: none;
+      border: none;
+
+      cursor: pointer;
+    }
   }
 
   .card-body {
     padding: 15px;
 
-
     .analysis-section {
       position: relative;
+
       margin-bottom: 20px;
 
       h4 {
@@ -234,11 +250,13 @@ export default {
 
       .loading-state {
         display: flex;
+
         justify-content: space-evenly;
         width: calc(200% + 8px);
 
         .loader {
           display: flex;
+
           width: 16px;
           height: 16px;
         }
@@ -277,8 +295,8 @@ export default {
       }
 
       .pill-wrapper {
-        position: relative;
         display: flex;
+        position: relative;
 
         flex-direction: column;
         align-items: center;
@@ -289,7 +307,6 @@ export default {
             left: calc(-100% - 8px);
           }
         }
-
 
         .analysis-pill {
           display: flex;
@@ -370,6 +387,7 @@ export default {
           padding: 16px;
 
           background: #ffffff;
+          color: #1b3a57;
 
           border: 1px solid #ffcdd2;
           border-radius: 16px;
@@ -380,7 +398,6 @@ export default {
             .dosage-text {
               margin-bottom: 12px;
 
-              color: #1b3a57;
               font-size: 13px;
               font-weight: 600;
             }
@@ -395,13 +412,12 @@ export default {
             }
           }
 
-          .drug-link {
+          .drug-link, .monograph-link {
             display: flex;
 
             align-items: center;
             padding: 4px 0;
 
-            color: #1b3a57;
             font-size: 13px;
 
             cursor: pointer;
@@ -416,17 +432,7 @@ export default {
           .monograph-link {
             margin-top: 12px;
 
-            color: #1b3a57;
-            font-size: 13px;
             font-weight: 500;
-
-            cursor: pointer;
-
-            .arrow {
-              margin-left: 5px;
-
-              color: #cbd5e0;
-            }
           }
         }
       }

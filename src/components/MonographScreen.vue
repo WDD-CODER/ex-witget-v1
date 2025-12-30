@@ -4,13 +4,14 @@
       <button class="back-btn" @click="$emit('set-screen', 'ResultsScreen')">
         <span class="arrow">←</span>
       </button>
-      <!-- <span class="suggest-icon">
-        <img :src="item.icon" :alt="item.name + ' icon'" />
-      </span> -->
-      <h2>{{ selectedItemName }}</h2>
+      <span v-if="drugIcon && this.fromWere === 'fromSearch'" class="drug-icon">
+        <img :src="drugIcon" :alt="drugIcon + ' icon'" />
+      </span>
+      <h2>{{ selectedItem.name }}</h2>
     </div>
+
     <div class="monograph-body">
-      <div v-if="!!drugInfo" class="drug-info">
+      <div v-if="!!drugInfo" class="drug-info" :class="{ 'from-result': fromWere === 'fromResult' }">
         <div v-for="(value, title) in drugInfo" :key="title" class="drug-label" @click="setLabel(value, title)">
           <span class="title">{{ title }}</span>
           <span class="arrow">→</span>
@@ -30,7 +31,11 @@ export default {
   name: 'MonographScreen'
   ,
   props: {
-    selectedItemName: {
+    selectedItem: {
+      type: Object,
+      required: true
+    },
+    fromWere: {
       type: String,
       required: true
     },
@@ -38,6 +43,7 @@ export default {
   data() {
     return {
       drugInfo: null,
+      drugIcon: null,
     }
   },
   methods: {
@@ -83,18 +89,23 @@ export default {
           labels[label] = value.trim();
         }
       });
+      // Resolve SVG path dynamically so the bundler can see it
+      const iconPath = raw.type === 'drug'
+        ? new URL('../assets/img/pill-big.svg', import.meta.url).href
+        : new URL('../assets/img/leaf.svg', import.meta.url).href;
 
+      this.drugIcon = iconPath
       return labels
     },
+
     setLabel(data, title) {
       this.$emit('set-label', data, title)
       this.$emit('set-screen', 'LabelScreen')
-
     },
   },
   async mounted() {
     try {
-      const drug = await DrugService.fetchDragByName(this.selectedItemName);
+      const drug = await DrugService.fetchDragByName(this.selectedItem.name);
       if (!drug) return
       this.drugInfo = this.mapMaterialInfo(drug)
     } catch (err) {
@@ -107,6 +118,30 @@ export default {
 
 <style scoped>
 .monograph-screen {
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  height: 100%;
+
+  border-radius: 24px;
+
+  .monograph-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+
+    .drug-icon {
+      display: flex;
+
+      img {
+        width: 23.76px;
+        height: 21.1px;
+      }
+    }
+  }
 
   .loader {
     display: flex;
@@ -117,27 +152,33 @@ export default {
     .spinner {
       width: 26px;
       height: 26px;
+
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #1b3a57;
+      border-radius: 50%;
+
+      animation: spin 0.8s linear infinite;
     }
   }
 
   .monograph-body {
+    border-radius: inherit;
 
     .drug-info {
       display: grid;
+      z-index: 1000;
       grid-template-columns: repeat(2, 1fr);
       grid-auto-flow: dense;
-      z-index: 1000;
 
-      justify-content: flex-start;
-      align-items: stretch;
-      gap: 12px;
-      width: 100%;
+      column-gap: 2px;
 
+      p {
+        margin: 0;
+      }
 
       .drug-label {
         display: flex;
         align-items: center;
-
         height: fit-content;
         padding: 6px;
 
@@ -168,12 +209,7 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

@@ -31,7 +31,7 @@ export const drugServiceRemote = {
                         ? new URL('../assets/img/pill.svg', import.meta.url).href
                         : new URL('../assets/img/leaf.svg', import.meta.url).href;
                     return {
-                        // id: item._id || item.id,
+                        id: item._id || item.id,
                         name: item.txt,
                         icon:iconPath,
                         type: item.type

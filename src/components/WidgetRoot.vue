@@ -9,21 +9,20 @@
     <div v-if="isExpanded" class="afikasafe-widget-card">
       <SearchScreen v-if="contentMode === 'SearchScreen'" :selected-items="selectedItems"
         :loading="isLoadingDepletions || isLoadingOptimizations" @add-item="addItem" @remove-item="removeItem"
-        @process-analysis="handleCheckInteractions"   @set-screen="setScreen"  @set-selected-item="onSetSelectedItem"/>
+        @process-analysis="handleCheckInteractions" @set-screen="setScreen" @set-selected-item="onSetSelectedItem" />
 
       <ResultsScreen v-else-if="contentMode === 'ResultsScreen'" :depletions="depletions" :optimizations="optimizations"
         :isLoadingDepletions="isLoadingDepletions" :isLoadingOptimizations="isLoadingOptimizations"
         @set-screen="setScreen" @set-selected-item="onSetSelectedItem" @set-drug-interaction="onSetDrugInteraction" />
 
-      <MonographScreen v-else-if="contentMode === 'MonographScreen'" :selectedItemName="selectedItemName"
-        @set-screen="setScreen" @set-label="setSelectedLabel" />
+      <MonographScreen v-else-if="contentMode === 'MonographScreen'" :selectedItem="selectedItem"
+        @set-screen="setScreen" @set-label="setSelectedLabel" :fromWere="fromWere" />
 
       <LabelScreen v-else-if="contentMode === 'LabelScreen'" :selectedLabelTitle="selectedLabelTitle"
         :selectedLabelData="selectedLabelData" @set-screen="setScreen" />
 
-
       <InteractionScreen v-else-if="contentMode === 'InteractionScreen'" :interactedDrugName="interactedDrugName"
-        :mainDrugName="mainDrugName" @set-screen="setScreen" />
+        :mainDrugName="mainDrugName" :interactionInfo="interactionInfo" @set-screen="setScreen" />
     </div>
 
 
@@ -53,7 +52,7 @@ export default {
       isExpanded: false,
       contentMode: 'SearchScreen',
       selectedItems: [],
-      selectedItemName: '',
+      selectedItem: '',
       selectedLabelTitle: '',
       selectedLabelData: '',
       mainDrugName: '',
@@ -61,7 +60,9 @@ export default {
       depletions: [],
       optimizations: [],
       isLoadingDepletions: false,
-      isLoadingOptimizations: false
+      isLoadingOptimizations: false,
+      fromWere: null,
+      interactionInfo: null
     };
   },
   mounted() {
@@ -75,13 +76,16 @@ export default {
       this.selectedLabelTitle = title
       this.selectedLabelData = data
     },
-    onSetDrugInteraction(mainDrug, interactedDrug) {
+    onSetDrugInteraction(mainDrug, interactedDrug, interactionInfo) {
+      this.interactionInfo = interactionInfo
       this.mainDrugName = mainDrug
       this.interactedDrugName = interactedDrug
     },
-    onSetSelectedItem(DrugName) {
-      console.log("🚀 ~ DrugName:", DrugName)
-      this.selectedItemName = DrugName
+    onSetSelectedItem(drug, fromWere) {
+      console.log("🚀 ~ fromWere:", fromWere)
+      console.log("🚀 ~ DrugName:", drug)
+      this.selectedItem = drug
+      this.fromWere = fromWere
     },
     setScreen(screenName) {
       this.contentMode = screenName;
@@ -229,7 +233,7 @@ export default {
     border-radius: 24px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 
-     background-color: #F4F5F0;
+    background-color: #F4F5F0;
 
   }
 
@@ -255,6 +259,12 @@ export default {
   min-height: 200px;
 
   background: #f4f6f2;
+  border-radius: 24px;
+
+  p {
+    margin: 0;
+  }
+
 
   .monograph-header {
     display: flex;
@@ -263,6 +273,8 @@ export default {
     align-items: center;
     padding: 10px 5px;
 
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
     background: #e9ede4;
     z-index: 1000;
 
@@ -294,7 +306,7 @@ export default {
   .monograph-body {
     position: relative;
     display: grid;
-    padding: 15px;
+    padding: 5px 15px;
     background-color: inherit;
   }
 }
